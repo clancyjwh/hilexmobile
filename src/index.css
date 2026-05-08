@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  background-color: #020617;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  overscroll-behavior-y: none; /* Disable pull-to-refresh for better app feel */
+}
+
+input, button {
+  font-size: 16px; /* Prevents iOS auto-zoom on focus */
+}
