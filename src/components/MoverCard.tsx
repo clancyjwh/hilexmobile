@@ -6,40 +6,48 @@ interface MoverCardProps {
   onClick: () => void;
 }
 
+const getCardStyle = (score: number) => {
+  // Positive Scale
+  if (score >= 7) return 'bg-[#22c55e] border-[#4ade80]'; // bright green
+  if (score >= 4) return 'bg-[#16a34a] border-[#22c55e]'; // medium green
+  if (score >= 1) return 'bg-[#14532d] border-[#166534]'; // light green (darker shade for intensity)
+  
+  // Neutral Scale
+  if (score >= -1) return 'bg-[#334155] border-[#475569]'; // dark grey/neutral
+  
+  // Negative Scale
+  if (score >= -4) return 'bg-[#fb923c] border-[#fdba74]'; // light orange
+  if (score >= -7) return 'bg-[#ea580c] border-[#f97316]'; // orange
+  return 'bg-[#dc2626] border-[#ef4444]'; // red
+};
+
 export default function MoverCard({ mover, onClick }: MoverCardProps) {
-  const signalPercent = ((mover.score + 10) / 20) * 100;
-  const isPositive = mover.score > 0;
-  const scoreColor = isPositive ? 'text-green-400' : 'text-red-400';
-  const barColor = isPositive ? 'bg-green-500' : 'bg-red-500';
+  const cardStyle = getCardStyle(mover.score);
 
   return (
     <button 
       onClick={onClick}
-      className="w-full h-20 bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between active:scale-[0.98] active:bg-white/10 transition-all text-left overflow-hidden relative"
+      className={`w-full h-20 rounded-2xl p-4 flex items-center justify-between active:scale-[0.98] transition-all text-left overflow-hidden relative border ${cardStyle}`}
     >
       <div className="flex flex-col flex-1">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="font-bold text-white text-lg truncate max-w-[150px]">{mover.name}</span>
-          <span className="text-[10px] font-bold uppercase tracking-tighter px-1.5 py-0.5 rounded bg-white/10 text-slate-400 border border-white/5">
+        <div className="flex items-center gap-2">
+          <span className="font-extrabold text-white text-xl truncate max-w-[200px] drop-shadow-sm">
+            {mover.name}
+          </span>
+          <span className="text-[10px] font-black uppercase tracking-tighter px-1.5 py-0.5 rounded bg-black/20 text-white/80 border border-white/10">
             {mover.type}
           </span>
         </div>
-        <div className="flex flex-col gap-1 pr-12">
-          <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
-            <div 
-              className={`h-full ${barColor} transition-all duration-500`}
-              style={{ width: `${signalPercent}%` }}
-            />
-          </div>
-          <span className="text-[10px] text-slate-500 font-mono tracking-tighter">SIGNAL STRENGTH</span>
-        </div>
+        <span className="text-[10px] text-white/60 font-bold tracking-widest uppercase mt-1">
+          {mover.symbol}
+        </span>
       </div>
 
       <div className="flex flex-col items-end">
-        <span className={`text-2xl font-bold ${scoreColor}`}>
-          {isPositive ? '+' : ''}{mover.score.toFixed(1)}
+        <span className="text-3xl font-black text-white drop-shadow-md">
+          {mover.score > 0 ? '+' : ''}{mover.score.toFixed(1)}
         </span>
-        <span className="text-[10px] font-bold text-slate-500 uppercase">HeatScore</span>
+        <span className="text-[8px] font-black text-white/70 uppercase tracking-tighter">HeatScore</span>
       </div>
     </button>
   );

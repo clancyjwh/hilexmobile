@@ -12,59 +12,62 @@ export interface Mover {
   accuracy?: number;
 }
 
-export const fetchMovers = async (): Promise<Mover[]> => {
-  const financeAssets = [
-    { table: 'stocks_top_picks', type: 'stock' as const },
-    { table: 'ca_stocks_top_picks', type: 'stock' as const },
-    { table: 'crypto_top_picks', type: 'crypto' as const },
-    { table: 'forex_top_picks', type: 'forex' as const },
-    { table: 'commodities_top_picks', type: 'commodity' as const },
-  ];
+const cryptoSymbols = ['BTC', 'ETH', 'XRP', 'SOL', 'ADA'];
+const americanStocks = ['AAPL', 'TSLA', 'NVDA', 'MSFT', 'AMZN'];
+const forexSymbols = ['EUR/USD', 'USD/CAD', 'USD/JPY', 'AUD/USD', 'GBP/USD'];
+const commoditySymbols = ['XAU/USD', 'WTI/USD', 'NG/USD', 'XAG/USD', 'HG1'];
+const canadianStocks = ['SHOP', 'CSU', 'LSPD', 'CLS', 'SPAI'];
 
+export const fetchMovers = async (): Promise<Mover[]> => {
   try {
-    const results = await Promise.all([
-      ...financeAssets.map(fa => supabase.from(fa.table).select('*').order('updated_at', { ascending: false }).limit(20)),
-      supabase.from('entity_scores').select('*').order('score', { ascending: false }).limit(20)
+    const [stocksResult, caStocksResult, cryptoResult, forexResult, commoditiesResult, entityResult] = await Promise.all([
+      supabase.from('stocks_top_picks').select('*').in('symbol', americanStocks),
+      supabase.from('ca_stocks_top_picks').select('*').in('symbol', canadianStocks),
+      supabase.from('crypto_top_picks').select('*').in('symbol', cryptoSymbols),
+      supabase.from('forex_top_picks').select('*').in('symbol', forexSymbols),
+      supabase.from('commodities_top_picks').select('*').in('symbol', commoditySymbols),
+      supabase.from('entity_scores').select('*').gte('updated_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()).order('score', { ascending: false }).limit(20)
     ]);
 
     const movers: Mover[] = [];
 
-    // Process Finance
-    financeAssets.forEach((fa, index) => {
-      const data = results[index].data;
-      if (data) {
-        data.forEach((item: any) => {
-          movers.push({
-            id: item.id,
-            name: item.stock_name || item.crypto_name || item.pair_name || item.commodity_name || item.symbol,
-            symbol: item.symbol,
-            score: parseFloat(item.signal || 0),
-            type: fa.type,
-            indicators: item.indicators,
-            historical_performance: item.historical_performance,
-          });
+    const processFinance = (data: any[] | null, type: 'stock' | 'crypto' | 'forex' | 'commodity') => {
+      if (!data) return;
+      data.forEach((item: any) => {
+        movers.push({
+          id: item.id,
+          name: item.stock_name || item.crypto_name || item.pair_name || item.commodity_name || item.symbol,
+          symbol: item.symbol,
+          score: parseFloat(item.signal || 0),
+          type: type,
+          indicators: item.indicators,
+          historical_performance: item.historical_performance,
         });
-      }
-    });
+      });
+    };
 
-    // Process Sports
-    const sportsData = results[financeAssets.length].data;
-    if (sportsData) {
-      sportsData.forEach((item: any) => {
+    processFinance(stocksResult.data, 'stock');
+    processFinance(caStocksResult.data, 'stock');
+    processFinance(cryptoResult.data, 'crypto');
+    processFinance(forexResult.data, 'forex');
+    processFinance(commoditiesResult.data, 'commodity');
+
+    if (entityResult.data) {
+      entityResult.data.forEach((item: any) => {
         movers.push({
           id: item.id,
           name: item.name,
           symbol: item.org || item.sport,
           score: parseFloat(item.score || 0),
           type: 'sport',
-          indicators: null, // Sports might not have the same indicator grid
+          indicators: null,
           historical_performance: null,
         });
       });
     }
 
-    // Sort by absolute score to show top movers (highest impact)
-    return movers.sort((a, b) => Math.abs(b.score) - Math.abs(a.score));
+    // Sort by HeatScore (descending) like desktop
+    return movers.sort((a, b) => b.score - a.score);
   } catch (err) {
     console.error('Error fetching movers:', err);
     return [];
