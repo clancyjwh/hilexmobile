@@ -30,7 +30,6 @@ export default function HomePage() {
     setAccuracy(null);
     setIntelligence(null);
     
-    // If we have prefetched data, use it immediately
     if (mover.prefetchedBreakdown) {
       setIntelligence({ breakdown: mover.prefetchedBreakdown });
       setIntelLoading(false);
@@ -50,6 +49,13 @@ export default function HomePage() {
     } finally {
       setIntelLoading(false);
     }
+  };
+
+  const getNameFontSize = (name: string) => {
+    if (name.length > 15) return 'text-xl';
+    if (name.length > 12) return 'text-2xl';
+    if (name.length > 8) return 'text-3xl';
+    return 'text-4xl';
   };
 
   return (
@@ -132,16 +138,16 @@ export default function HomePage() {
         {selectedMover && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-8">
             {/* Header section */}
-            <div className="flex items-center justify-between gap-6">
-              <div className="flex items-center gap-4 flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4 flex-1">
                 {(selectedMover.headshot_url || selectedMover.logo_url) && (
                   <img src={selectedMover.headshot_url || selectedMover.logo_url} className="w-16 h-16 rounded-full border-2 border-white/10 bg-black/40 shadow-2xl shrink-0 object-contain" alt="" />
                 )}
-                <div className="min-w-0 overflow-hidden">
-                  <h3 className={`${selectedMover.name.length > 10 ? 'text-2xl' : 'text-4xl'} font-black italic uppercase tracking-tighter text-white leading-none truncate`}>
+                <div>
+                  <h3 className={`${getNameFontSize(selectedMover.name)} font-black italic uppercase tracking-tighter text-white leading-tight`}>
                     {selectedMover.name}
                   </h3>
-                  <div className="mt-2">
+                  <div className="mt-1">
                     <span className="text-[9px] bg-[#00D8FF]/10 text-[#00D8FF] px-2.5 py-1 rounded border border-[#00D8FF]/20 uppercase font-black tracking-[0.2em]">
                       {selectedMover.type === 'sport' ? (selectedMover.entity_type === 'athlete' ? 'ATHLETE' : 'TEAM') : selectedMover.type}
                     </span>

@@ -92,10 +92,6 @@ export const fetchMovers = async (): Promise<Mover[]> => {
         if (nameU.includes('PARIS SAINT-GERMAIN')) displayName = 'PSG';
         else if (nameU.includes('REAL MADRID')) displayName = 'REAL';
         else if (nameU.includes('BAYERN')) displayName = 'BAYERN';
-        else if (item.type === 'athlete' && displayName.includes(' ')) {
-          const parts = displayName.trim().split(/\s+/);
-          displayName = parts.length >= 2 ? `${parts[0][0]}. ${parts.slice(1).join(' ')}` : displayName;
-        }
 
         movers.push({
           id: item.id,
@@ -114,7 +110,7 @@ export const fetchMovers = async (): Promise<Mover[]> => {
 
     const sortedMovers = movers.sort((a, b) => Math.abs(b.score) - Math.abs(a.score)).slice(0, 30);
 
-    // Pre-fetch sports indicators to make modal instant
+    // Pre-fetch sports indicators
     await Promise.all(sortedMovers.filter(m => m.type === 'sport').map(async m => {
       try {
         const intel = await fetchAssetIntelligence(m);
@@ -135,34 +131,42 @@ export const fetchAssetIntelligence = async (mover: Mover): Promise<any> => {
 
     if (mover.type === 'sport') {
       const sport = mover.sport?.toLowerCase();
+      // CLEAN ID: "nhl_COL" -> "COL"
+      const cleanId = mover.id.split('_').pop() || mover.id;
+
       if (mover.entity_type === 'team') {
-        const endpoint = sport === 'soccer' ? 'ucl' : sport;
+        const endpoint = sport === 'soccer' ? 'ucl' : (sport === 'football' ? 'ucl' : sport);
         const res = await fetch(`https://hilex-nhl-production.up.railway.app/${endpoint}/analyze`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(sport === 'nhl' ? { home_team: mover.id } : { home_team: mover.id.split('_').pop(), away_team: 'AUTO' })
+          body: JSON.stringify(sport === 'nhl' ? { home_team: cleanId } : { home_team: cleanId, away_team: 'AUTO' })
         });
         if (res.ok) {
           const data = await res.json();
           const teamData = data.home_team || data.away_team;
-          return { breakdown: teamData?.breakdown };
+          return { breakdown: teamData?.breakdown || {} };
         }
       } else {
         const res = await fetch(`https://hilex-nhl-production.up.railway.app/athletes/heatscore/${encodeURIComponent(mover.id)}`);
         if (res.ok) {
           const data = await res.json();
-          const breakdown = data.breakdown || {};
-          // Specific mapping for NHL Athletes if needed
-          if (sport === 'nhl' && data.playoffs) {
-             breakdown.gwg = data.playoffs.gwg;
-             breakdown.playoff_ppg = data.playoffs.ppg;
-             breakdown.last3_pts = data.playoffs.last3_points;
-             breakdown.regular_ppg = data.regular_season?.ppg;
+          const breakdown: any = data.breakdown || {};
+          
+          // FORCED MAPPING FOR ATHLETES
+          if (sport === 'nhl') {
+            if (data.playoffs) {
+               breakdown.gwg = data.playoffs.gwg || 0;
+               breakdown.playoff_ppg = data.playoffs.ppg || 0;
+               breakdown.last3_pts = data.playoffs.last3_points || 0;
+            }
+            if (data.regular_season) {
+               breakdown.regular_ppg = data.regular_season.ppg || 0;
+            }
           }
           return { breakdown };
         }
       }
-      return { breakdown: null };
+      return { breakdown: {} };
     } else {
       const category = mover.type === 'stock' ? (canadianStocks.includes(mover.symbol) ? 'ca_stocks_top_picks' : 'stocks_top_picks') : 
                        mover.type === 'crypto' ? 'crypto_top_picks' : 
@@ -201,7 +205,7 @@ export const fetchAssetIntelligence = async (mover: Mover): Promise<any> => {
       }
       return { breakdown: indicators, json9 };
     }
-  } catch { return null; }
+  } catch { return { breakdown: {} }; }
 };
 
 export const fetchAssetAccuracy = async (mover: Mover): Promise<number | null> => {
