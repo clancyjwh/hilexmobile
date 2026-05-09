@@ -23,31 +23,30 @@ export default function MoverCard({ mover, onClick }: MoverCardProps) {
   return (
     <button 
       onClick={onClick}
-      className={`w-full aspect-[16/9] rounded-xl p-3 flex flex-col justify-between active:scale-[0.96] transition-all text-left overflow-hidden relative border shadow-lg ${cardStyle} ${isLight ? 'text-[#064e3b]' : 'text-white'}`}
+      className={`w-full aspect-[16/10] rounded-xl p-3 flex flex-col justify-between active:scale-[0.96] transition-all text-left overflow-hidden relative border shadow-lg ${cardStyle} ${isLight ? 'text-[#064e3b]' : 'text-white'}`}
     >
       <div className="flex items-start justify-between w-full">
         <span className={`text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${isLight ? 'bg-black/10 border-black/10' : 'bg-black/20 border-white/20'} border`}>
-          {mover.type}
+          {mover.type === 'sport' ? (mover.entity_type === 'athlete' ? 'PLAYER' : 'TEAM') : mover.type}
         </span>
         {(mover.headshot_url || mover.logo_url) && (
-          <img 
-            src={mover.headshot_url || mover.logo_url} 
-            alt="" 
-            className="w-6 h-6 rounded-full object-cover border border-white/20 shadow-sm"
-          />
+          <div className="relative">
+             <img 
+              src={mover.headshot_url || mover.logo_url} 
+              alt="" 
+              className="w-7 h-7 rounded-full object-cover border border-white/20 shadow-md bg-black/10"
+            />
+          </div>
         )}
       </div>
 
       <div className="flex items-end justify-between w-full mt-auto">
-        <div className="flex flex-col flex-1 min-w-0 pr-2">
-          <span className="font-black text-[11px] leading-tight truncate uppercase italic">
+        <div className="flex flex-col flex-1 min-w-0">
+          <span className="font-black text-xs leading-none truncate uppercase italic tracking-tighter">
             {mover.name}
           </span>
-          <span className={`text-[8px] font-bold opacity-60 truncate uppercase`}>
-            {mover.symbol.includes('_') ? mover.symbol.split('_').pop() : mover.symbol}
-          </span>
         </div>
-        <span className="text-lg font-black italic drop-shadow-sm whitespace-nowrap">
+        <span className="text-lg font-black italic drop-shadow-sm whitespace-nowrap ml-1">
           {mover.score > 0 ? '+' : ''}{mover.score.toFixed(1)}
         </span>
       </div>
