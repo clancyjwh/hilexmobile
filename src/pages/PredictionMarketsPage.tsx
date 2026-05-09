@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Sparkles, ChevronDown, Zap, AlertTriangle, TrendingUp, Info } from 'lucide-react';
+import { Search, Sparkles, ChevronDown, Zap, AlertTriangle, TrendingUp, TrendingDown, Info } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import BottomNav from '../components/BottomNav';
 
@@ -9,6 +9,7 @@ interface MarketItem {
   event_score: number;
   yes_prob: number;
   polymarket_yes_prob: number | null;
+  polymarket_week_change: number | null;
   gap: number | null;
   misprice_flag: boolean;
   breakdown?: any;
@@ -30,15 +31,18 @@ export default function PredictionMarketsPage() {
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const trackEvent = (description: string) => {
+  const trackEvent = (description: string, slug: string | null = null) => {
+    // IDENTICAL WEBHOOK TARGET & DATA STRUCTURE
     fetch('https://hook.us2.make.com/5qbkt4iyi3e52o8auyjssk4bxar6f8ay', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         event_description: description,
+        query: description,
+        slug: slug === 'null' ? null : slug,
         source: 'mobile'
       })
-    }).catch(() => {}); // Fire and forget
+    }).catch(() => {}); // Fire and forget as requested
   };
 
   const parseMarketItem = (raw: string): MarketItem => {
@@ -54,14 +58,15 @@ export default function PredictionMarketsPage() {
           slug: parsed.slug || parsed.id || '',
           event_score: Math.round(score * 10),
           yes_prob: Math.round(((score + 1) / 2) * 100),
-          polymarket_yes_prob: parsed.polymarket_yes_prob ? Math.round(parseFloat(parsed.polymarket_yes_prob) * 100) : null,
+          polymarket_yes_prob: parsed.polymarket_yes_prob ? Math.round(parseFloat(parsed.polymarket_yes_prob) * 100) : (parsed.yes_prob ? Math.round(parseFloat(parsed.yes_prob) * 100) : null),
+          polymarket_week_change: parsed.polymarket_week_change !== undefined ? parseFloat(parsed.polymarket_week_change) : (parsed.week_change !== undefined ? parseFloat(parsed.week_change) : null),
           gap: parsed.gap ? Math.round(parseFloat(parsed.gap) * 100) : null,
           misprice_flag: parsed.misprice_flag === "true" || parsed.misprice_flag === true,
           breakdown: parsed
         };
       } catch (e) { console.error(e); }
     }
-    return { question: cleaned, slug: '', event_score: 0, yes_prob: 50, polymarket_yes_prob: null, gap: null, misprice_flag: false };
+    return { question: cleaned, slug: '', event_score: 0, yes_prob: 50, polymarket_yes_prob: null, polymarket_week_change: null, gap: null, misprice_flag: false };
   };
 
   const fetchData = async () => {
@@ -89,16 +94,16 @@ export default function PredictionMarketsPage() {
     e.preventDefault();
     if (searchInput.trim()) {
       trackEvent(searchInput.trim());
-      // For now, mobile just triggers the webhook, logic for actual search results is coming later
       setSearchInput('');
     }
   };
 
+  const handleAnalyze = (item: MarketItem) => {
+    trackEvent(item.question, item.slug);
+  };
+
   const toggleExpand = (item: MarketItem) => {
     const id = item.question;
-    if (expandedId !== id) {
-      trackEvent(item.question);
-    }
     setExpandedId(expandedId === id ? null : id);
   };
 
@@ -143,83 +148,99 @@ export default function PredictionMarketsPage() {
           <div className="space-y-4">
             {questions.map((item) => {
               const isExpanded = expandedId === item.question;
+              const change = item.polymarket_week_change;
+              const isUp = change !== null && change > 0;
+              
               return (
                 <div 
                   key={item.question} 
-                  className={`bg-white/5 border ${item.misprice_flag ? 'border-[#00d4aa]/30' : 'border-white/10'} rounded-2xl overflow-hidden transition-all duration-500 shadow-xl`}
+                  className={`bg-[#0a0e1a] border ${item.misprice_flag ? 'border-[#00d4aa]/30 shadow-[0_0_20px_rgba(0,212,170,0.05)]' : 'border-white/10'} rounded-2xl overflow-hidden transition-all duration-500 shadow-xl`}
                 >
-                  <button 
-                    onClick={() => toggleExpand(item)}
-                    className="w-full p-6 text-left"
-                  >
-                    <div className="flex flex-col gap-4">
+                  <div className="p-6">
+                    <div 
+                      onClick={() => toggleExpand(item)}
+                      className="flex flex-col gap-4 active:opacity-60 transition-opacity"
+                    >
                       <div className="flex justify-between items-start gap-4">
-                        <h3 className="font-black italic uppercase tracking-tighter text-lg leading-tight text-white flex-1">{item.question}</h3>
-                        <ChevronDown size={20} className={`text-slate-600 transition-transform duration-500 ${isExpanded ? 'rotate-180' : ''}`} />
+                        <h3 className="font-bold text-lg leading-tight text-white flex-1">{item.question}</h3>
+                        <ChevronDown size={20} className={`text-slate-600 transition-transform duration-500 shrink-0 ${isExpanded ? 'rotate-180' : ''}`} />
                       </div>
 
-                      <div className="flex items-center gap-6">
-                        <div className="flex flex-col">
-                          <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">HeatScore</span>
-                          <span className={`text-3xl font-black italic tracking-tighter ${getScoreColor(item.event_score)}`}>
-                            {item.event_score > 0 ? '+' : ''}{item.event_score}
-                          </span>
-                        </div>
-                        <div className="h-8 w-[1px] bg-white/10" />
-                        <div className="flex flex-col">
-                          <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">HiLEX Prob</span>
-                          <span className="text-xl font-black text-white italic">{item.yes_prob}%</span>
-                        </div>
-                        {item.polymarket_yes_prob !== null && (
-                          <>
-                            <div className="h-8 w-[1px] bg-white/10" />
-                            <div className="flex flex-col">
-                              <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Poly Odds</span>
-                              <span className="text-xl font-black text-slate-400 italic">{item.polymarket_yes_prob}%</span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          {item.polymarket_yes_prob !== null ? (
+                            <div className="flex items-center gap-2">
+                              <span className="text-[#00d4aa] font-black text-xl italic">{item.polymarket_yes_prob}% YES</span>
+                              <Info size={12} className="text-slate-600" />
                             </div>
-                          </>
-                        )}
-                        {item.misprice_flag && (
-                          <div className="ml-auto bg-[#00d4aa]/10 border border-[#00d4aa]/20 px-2 py-1 rounded-md flex items-center gap-1">
-                            <Zap size={10} className="text-[#00d4aa]" />
-                            <span className="text-[8px] font-black text-[#00d4aa] uppercase tracking-widest">GAP</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </button>
+                          ) : (
+                            <span className="text-slate-600 font-bold italic text-xs uppercase tracking-widest">Market Unavailable</span>
+                          )}
 
-                  {/* Expandable Breakdown */}
-                  {isExpanded && (
-                    <div className="px-6 pb-6 pt-4 border-t border-white/5 bg-black/20 animate-in slide-in-from-top-2 duration-500">
-                      <div className="space-y-6">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="bg-white/5 rounded-xl p-4 border border-white/5">
-                            <div className="text-[8px] font-black text-slate-600 uppercase tracking-widest mb-1">Sentiment</div>
-                            <div className="text-lg font-black text-white">{(parseFloat(item.breakdown?.["News & Sentiment score"] || 0) * 10).toFixed(1)}</div>
-                          </div>
-                          <div className="bg-white/5 rounded-xl p-4 border border-white/5">
-                            <div className="text-[8px] font-black text-slate-600 uppercase tracking-widest mb-1">Momentum</div>
-                            <div className="text-lg font-black text-white">{(parseFloat(item.breakdown?.["Recent Momentum"] || 0) * 10).toFixed(1)}</div>
-                          </div>
+                          {change !== null && change !== 0 && (
+                            <div className="flex items-center gap-1.5 ml-2">
+                              {isUp ? <TrendingUp size={16} className="text-green-500" /> : <TrendingDown size={16} className="text-red-500" />}
+                              <span className={`font-black text-xl italic ${isUp ? 'text-green-500' : 'text-red-500'}`}>
+                                {Math.abs(change * 100).toFixed(1)}%
+                              </span>
+                              <Info size={12} className="text-slate-600" />
+                            </div>
+                          )}
                         </div>
 
-                        <div className="bg-[#00d4aa]/5 border border-[#00d4aa]/10 rounded-xl p-5">
-                          <div className="flex items-center gap-2 mb-2">
-                            <AlertTriangle size={14} className="text-[#00d4aa]" />
-                            <span className="text-[9px] font-black text-[#00d4aa] uppercase tracking-widest">HiLEX Verdict</span>
-                          </div>
-                          <p className="text-xs font-bold text-slate-300 leading-relaxed italic">
-                            Market appears {item.yes_prob > (item.polymarket_yes_prob || 0) ? 'UNDERVALUED' : 'OVERVALUED'} relative to HiLEX institutional intelligence. Expected divergence: {Math.abs(item.gap || 0)}pp.
-                          </p>
-                        </div>
-                        
-                        <div className="pt-2">
-                          <div className="text-[8px] font-black text-slate-700 uppercase tracking-[0.3em] text-center italic">Institutional Forecast Logic Applied</div>
-                        </div>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleAnalyze(item); }}
+                          className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-[#00d4aa] px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-[#00d4aa]/20 active:scale-95"
+                        >
+                          ANALYZE →
+                        </button>
                       </div>
                     </div>
-                  )}
+
+                    {/* Expandable Breakdown */}
+                    {isExpanded && (
+                      <div className="mt-8 pt-8 border-t border-white/5 animate-in slide-in-from-top-2 duration-500">
+                        <div className="space-y-8">
+                          <div className="flex items-center justify-around">
+                            <div className="text-center">
+                              <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1 block">HeatScore</span>
+                              <span className={`text-4xl font-black italic tracking-tighter ${getScoreColor(item.event_score)}`}>
+                                {item.event_score > 0 ? '+' : ''}{item.event_score}
+                              </span>
+                            </div>
+                            <div className="h-10 w-[1px] bg-white/10" />
+                            <div className="text-center">
+                              <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1 block">HiLEX Prob</span>
+                              <span className="text-3xl font-black text-white italic">{item.yes_prob}%</span>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="bg-white/5 rounded-2xl p-5 border border-white/5">
+                              <div className="text-[8px] font-black text-slate-600 uppercase tracking-widest mb-1">Sentiment</div>
+                              <div className="text-xl font-black text-white italic">{(parseFloat(item.breakdown?.["News & Sentiment score"] || 0) * 10).toFixed(1)}</div>
+                            </div>
+                            <div className="bg-white/5 rounded-2xl p-5 border border-white/5">
+                              <div className="text-[8px] font-black text-slate-600 uppercase tracking-widest mb-1">Momentum</div>
+                              <div className="text-xl font-black text-white italic">{(parseFloat(item.breakdown?.["Recent Momentum"] || 0) * 10).toFixed(1)}</div>
+                            </div>
+                          </div>
+
+                          <div className="bg-[#00d4aa]/5 border border-[#00d4aa]/10 rounded-2xl p-6">
+                            <div className="flex items-center gap-2 mb-3">
+                              <AlertTriangle size={14} className="text-[#00d4aa]" />
+                              <span className="text-[10px] font-black text-[#00d4aa] uppercase tracking-[0.2em]">HiLEX Valuation Verdict</span>
+                            </div>
+                            <p className="text-xs font-bold text-slate-300 leading-relaxed italic">
+                              Polymarket appears <span className={item.yes_prob > (item.polymarket_yes_prob || 0) ? 'text-[#00d4aa]' : 'text-red-500'}>
+                                {item.yes_prob > (item.polymarket_yes_prob || 0) ? 'UNDERVALUED' : 'OVERVALUED'}
+                              </span> relative to institutional intelligence. Divergence Gap: {Math.abs(item.gap || 0)}pp.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}

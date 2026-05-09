@@ -17,7 +17,8 @@ interface Game {
   loading?: boolean;
 }
 
-const getScoreColor = (score: number) => {
+const getScoreColor = (score: number | undefined) => {
+  if (score === undefined) return 'text-slate-400';
   if (score >= 7) return 'text-green-400';
   if (score >= 4) return 'text-green-500';
   if (score >= 1) return 'text-green-600';
@@ -42,12 +43,13 @@ export default function SportsPage() {
 
   const fetchSchedule = async () => {
     setLoading(true);
+    setGames([]);
     try {
       const sportLower = activeSport?.toLowerCase();
       const res = await fetch(`https://hilex-nhl-production.up.railway.app/${sportLower}/schedule`);
       if (res.ok) {
         const data = await res.json();
-        const gamesList = (data.games || data).map((g: any, i: number) => ({
+        const gamesList = (data.games || data || []).map((g: any, i: number) => ({
           id: g.id || i.toString(),
           home_team_shorthand: g.home_team_shorthand || g.home_team || 'HOME',
           away_team_shorthand: g.away_team_shorthand || g.away_team || 'AWAY',
@@ -65,6 +67,8 @@ export default function SportsPage() {
 
   const handleAnalyze = async (gameIndex: number) => {
     const game = games[gameIndex];
+    if (!game) return;
+
     const newGames = [...games];
     newGames[gameIndex].loading = true;
     setGames(newGames);
@@ -74,10 +78,15 @@ export default function SportsPage() {
       const res = await fetch(`https://hilex-nhl-production.up.railway.app/${sportLower}/lite/analyze?home=${encodeURIComponent(game.home_team)}&away=${encodeURIComponent(game.away_team)}`);
       if (res.ok) {
         const data = await res.json();
-        newGames[gameIndex].analysis = {
-          home_score: data.home_score,
-          away_score: data.away_score
-        };
+        // Defensive check for expected number properties
+        if (typeof data.home_score === 'number' && typeof data.away_score === 'number') {
+          newGames[gameIndex].analysis = {
+            home_score: data.home_score,
+            away_score: data.away_score
+          };
+        } else {
+          console.error("Invalid data format from analyze endpoint:", data);
+        }
       }
     } catch (err) {
       console.error("Analysis failed:", err);
@@ -102,9 +111,9 @@ export default function SportsPage() {
               onClick={() => setActiveSport(sport)}
               className="w-full h-24 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-between px-8 group active:scale-95 transition-all duration-300"
             >
-              <span className="text-2xl font-black italic uppercase tracking-tight text-white group-hover:text-[#00D8FF] transition-colors">{sport}</span>
+              <span className="text-2xl font-black italic uppercase tracking-tight text-white group-hover:text-[#00d4aa] transition-colors">{sport}</span>
               <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center">
-                <Trophy size={20} className="text-slate-600 group-hover:text-[#00D8FF] transition-colors" />
+                <Trophy size={20} className="text-slate-600 group-hover:text-[#00d4aa] transition-colors" />
               </div>
             </button>
           ))}
@@ -117,14 +126,14 @@ export default function SportsPage() {
   if (activeSport === 'UFC' || activeSport === 'Soccer') {
     return (
       <div className="min-h-screen bg-[#020617] p-6 animate-in slide-in-from-right duration-500 pb-32">
-        <button onClick={() => setActiveSport(null)} className="flex items-center gap-2 text-[#00D8FF] mb-8 active:opacity-50">
+        <button onClick={() => setActiveSport(null)} className="flex items-center gap-2 text-[#00d4aa] mb-8 active:opacity-50">
           <ChevronLeft size={20} />
           <span className="text-[10px] font-black uppercase tracking-widest">Back to Sports</span>
         </button>
 
         <div className="h-[60vh] flex flex-col items-center justify-center text-center space-y-4">
-          <div className="w-20 h-20 bg-[#00D8FF]/5 rounded-3xl flex items-center justify-center border border-[#00D8FF]/10">
-            <Clock className="text-[#00D8FF]" size={32} />
+          <div className="w-20 h-20 bg-[#00d4aa]/5 rounded-3xl flex items-center justify-center border border-[#00d4aa]/10">
+            <Clock className="text-[#00d4aa]" size={32} />
           </div>
           <div>
             <h2 className="text-2xl font-black italic uppercase text-white">Coming Soon</h2>
@@ -138,14 +147,14 @@ export default function SportsPage() {
 
   return (
     <div className="min-h-screen bg-[#020617] p-6 animate-in slide-in-from-right duration-500 pb-32">
-      <button onClick={() => setActiveSport(null)} className="flex items-center gap-2 text-[#00D8FF] mb-8 active:opacity-50">
+      <button onClick={() => setActiveSport(null)} className="flex items-center gap-2 text-[#00d4aa] mb-8 active:opacity-50">
         <ChevronLeft size={20} />
         <span className="text-[10px] font-black uppercase tracking-widest">Back to Sports</span>
       </button>
 
       <div className="mb-8">
         <h2 className="text-3xl font-black italic uppercase text-white">{activeSport} Schedule</h2>
-        <div className="h-[1px] w-12 bg-[#00D8FF] mt-2" />
+        <div className="h-[1px] w-12 bg-[#00d4aa] mt-2" />
       </div>
 
       {loading ? (
@@ -163,13 +172,13 @@ export default function SportsPage() {
                 <button 
                   onClick={() => handleAnalyze(i)}
                   disabled={game.loading}
-                  className="bg-[#00D8FF] text-black px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all disabled:opacity-50"
+                  className="bg-[#00d4aa] text-black px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all disabled:opacity-50"
                 >
                   {game.loading ? '...' : 'Analyze'}
                 </button>
               </div>
 
-              {game.analysis && (
+              {game.analysis && typeof game.analysis.home_score === 'number' && (
                 <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-around animate-in slide-in-from-top-2 duration-300">
                   <div className="text-center">
                     <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">{game.away_team_shorthand}</p>
@@ -188,7 +197,7 @@ export default function SportsPage() {
               )}
             </div>
           ))}
-          {games.length === 0 && (
+          {games.length === 0 && !loading && (
             <p className="text-center text-slate-600 text-[10px] font-bold uppercase tracking-widest mt-20">No active games found</p>
           )}
         </div>
