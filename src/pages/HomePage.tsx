@@ -46,13 +46,13 @@ export default function HomePage() {
   };
 
   const getNameFontSize = (name: string) => {
-    if (name.length > 15) return 'text-xl';
-    if (name.length > 12) return 'text-2xl';
-    if (name.length > 8) return 'text-3xl';
-    return 'text-4xl';
+    if (name.length > 20) return 'text-[16px]';
+    if (name.length > 15) return 'text-[18px]';
+    if (name.length > 12) return 'text-[22px]';
+    if (name.length > 8) return 'text-[28px]';
+    return 'text-[32px]';
   };
 
-  // Determine the score to display (Prefer the live intelligence score over the mover list score)
   const displayScore = intelligence?.score !== undefined ? intelligence.score : selectedMover?.score || 0;
 
   return (
@@ -147,7 +147,7 @@ export default function HomePage() {
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className={`${getNameFontSize(selectedMover.name)} font-black italic uppercase tracking-tighter text-white leading-tight whitespace-nowrap overflow-hidden text-ellipsis`}>
+                  <h3 className={`${getNameFontSize(selectedMover.name)} font-black italic uppercase tracking-tighter text-white leading-tight`}>
                     {selectedMover.name}
                   </h3>
                   <div className="mt-1">
@@ -158,9 +158,9 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* CLEAN NUMBER: Use the displayScore (Syncs live data) */}
+              {/* CLEAN NUMBER: 7xl with stabilization */}
               <div className="flex items-center border-t border-white/5 pt-4">
-                <span className={`text-7xl font-black italic tracking-tighter leading-none ${displayScore > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                <span className={`text-7xl font-black italic tracking-tighter leading-[0.8] py-2 ${displayScore > 0 ? 'text-green-400' : 'text-red-400'}`}>
                   {displayScore > 0 ? '+' : ''}{displayScore.toFixed(1)}
                 </span>
               </div>

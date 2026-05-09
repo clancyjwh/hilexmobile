@@ -30,9 +30,9 @@ const flattenSportData = (data: any, sport?: string) => {
   const flat: any = { ...data };
 
   if (s === 'nhl') {
-    // Check EVERY possible production key for MacKinnon's stats
-    const playoffs = data.playoffs || data.breakdown?.playoffs || data.playoff_stats;
-    const regular = data.regular_season || data.breakdown?.regular_season || data.regularSeason || data.season_stats;
+    // TRIPLE FALLBACK for Athlete Stats (Lindholm Fix)
+    const playoffs = data.playoffs || data.breakdown?.playoffs || data.playoff_stats || data.stats?.playoffs;
+    const regular = data.regular_season || data.breakdown?.regular_season || data.regularSeason || data.season_stats || data.stats?.regular_season;
     
     if (playoffs) {
       flat.gwg = playoffs.gwg || playoffs.game_winning_goals || 0;
@@ -40,7 +40,7 @@ const flattenSportData = (data: any, sport?: string) => {
       flat.last3_points = playoffs.last3_points || playoffs.last_3_points || 0;
     }
     if (regular) {
-      flat.regular_ppg = regular.ppg || regular.points_per_game || 0;
+      flat.regular_ppg = regular.ppg || regular.points_per_game || regular.pointsPerGame || 0;
     }
   }
   
@@ -73,7 +73,7 @@ export const fetchMovers = async (): Promise<Mover[]> => {
       supabase.from('crypto_top_picks').select('*').in('symbol', cryptoSymbols),
       supabase.from('forex_top_picks').select('*').in('symbol', forexSymbols),
       supabase.from('commodities_top_picks').select('*').in('symbol', commoditySymbols),
-      supabase.from('entity_scores').select('*').order('score', { ascending: false })
+      supabase.from('entity_scores').select('*')
     ]);
 
     const movers: Mover[] = [];
@@ -136,7 +136,8 @@ export const fetchMovers = async (): Promise<Mover[]> => {
       });
     }
 
-    const sortedMovers = movers.sort((a, b) => Math.abs(b.score) - Math.abs(a.score)).slice(0, 30);
+    // ALIGN WITH DESKTOP SORTING: Direct descending order by score (Top 30)
+    const sortedMovers = movers.sort((a, b) => b.score - a.score).slice(0, 30);
     return sortedMovers;
   } catch (err) {
     console.error('Error fetching movers:', err);
