@@ -30,29 +30,29 @@ export default function IndicatorGrid({ indicators, type, sport, entityType }: I
   };
 
   const nhlTeamMapping: Record<string, string> = {
-    'points_pct': 'Points %',
-    'last_10': 'Last 10',
-    'goal_diff': 'Goal Diff',
-    'home_away': 'Venue Edge',
-    'streak': 'Streak',
-    'goalie': 'Goalie',
-    'h2h': 'H2H History',
-    'rest': 'Rest Edge',
-    'series': 'Series Factor'
+    'points_pct': 'POINTS %',
+    'last_10': 'LAST 10',
+    'goal_diff': 'GOAL DIFF',
+    'home_away': 'VENUE EDGE',
+    'streak': 'STREAK',
+    'goalie': 'GOALIE',
+    'h2h': 'H2H HISTORY',
+    'rest': 'REST EDGE',
+    'series': 'SERIES FACTOR'
   };
 
   const nhlAthleteMapping: Record<string, string> = {
     'gwg': 'GWG',
-    'playoff_ppg': 'Playoff PPG',
-    'last3_pts': 'Last 3 P',
-    'regular_ppg': 'Regular PPG'
+    'playoff_ppg': 'PLAYOFF PPG',
+    'last3_pts': 'LAST 3 P',
+    'regular_ppg': 'REGULAR PPG'
   };
 
   const nbaMapping: Record<string, string> = {
     'win_rate': 'WIN %',
-    'recent_form': 'L10',
-    'home_away': 'H/A',
-    'streak': 'STRK',
+    'recent_form': 'LAST 10',
+    'home_away': 'VENUE EDGE',
+    'streak': 'STREAK',
     'fg_pct': 'FG %',
     'three_pt_pct': '3PT %'
   };
@@ -67,8 +67,8 @@ export default function IndicatorGrid({ indicators, type, sport, entityType }: I
 
   const soccerMapping: Record<string, string> = {
     'recent_form': 'FORM',
-    'goal_difference': 'GD',
-    'home_away': 'H/A',
+    'goal_difference': 'GOAL DIFF',
+    'home_away': 'VENUE EDGE',
     'win_rate': 'WIN %'
   };
 
@@ -92,7 +92,7 @@ export default function IndicatorGrid({ indicators, type, sport, entityType }: I
   });
 
   return (
-    <div className={`grid ${displayIndicators.length > 6 ? 'grid-cols-2' : (displayIndicators.length <= 4 ? 'grid-cols-1' : 'grid-cols-2')} gap-2.5 overflow-x-hidden`}>
+    <div className={`grid ${displayIndicators.length > 6 ? 'grid-cols-2' : (displayIndicators.length <= 4 ? 'grid-cols-1' : 'grid-cols-2')} gap-2.5 overflow-x-hidden w-full`}>
       {displayIndicators.map((ind, i) => {
         const colorClass = getIndicatorColor(ind.score);
         const isGold = ind.score >= 9;
@@ -102,7 +102,7 @@ export default function IndicatorGrid({ indicators, type, sport, entityType }: I
             key={i}
             className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-500 shadow-lg ${colorClass} min-w-0`}
           >
-            <span className={`text-[9px] font-black uppercase tracking-widest truncate mr-2 ${isGold ? 'text-black/50' : 'opacity-60'}`}>
+            <span className={`text-[7.5px] font-black uppercase tracking-wider mr-2 shrink-0 ${isGold ? 'text-black/50' : 'opacity-60'}`}>
               {ind.name}
             </span>
             <span className="text-sm font-black italic shrink-0">

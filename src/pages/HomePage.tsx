@@ -161,12 +161,11 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* HEATSCORE Row */}
-              <div className="flex items-baseline gap-3 border-t border-white/5 pt-4">
-                <span className={`text-6xl font-black italic tracking-tighter leading-none ${selectedMover.score > 0 ? 'text-green-400' : 'text-red-400'}`}>
+              {/* CLEAN NUMBER: Just the score, no labels */}
+              <div className="flex items-center border-t border-white/5 pt-4">
+                <span className={`text-7xl font-black italic tracking-tighter leading-none ${selectedMover.score > 0 ? 'text-green-400' : 'text-red-400'}`}>
                   {selectedMover.score > 0 ? '+' : ''}{selectedMover.score.toFixed(1)}
                 </span>
-                <span className="text-[12px] font-black text-slate-500 uppercase tracking-widest shrink-0">Intelligence Signal</span>
               </div>
             </div>
 
