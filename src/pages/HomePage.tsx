@@ -61,7 +61,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#020617] text-white flex flex-col font-sans selection:bg-[#00D8FF]/30 overflow-x-hidden w-full">
       {/* Header */}
-      <header className="px-6 py-4 flex items-center justify-between sticky top-0 bg-[#020617]/90 backdrop-blur-xl z-40 border-b border-white/5 w-full overflow-hidden">
+      <header className="px-6 py-4 flex items-center justify-between sticky top-0 bg-[#020617]/90 backdrop-blur-xl z-40 border-b border-white/5 w-full">
         <div className="flex items-center gap-3 shrink-0">
           <div className="w-9 h-9 bg-white/5 rounded-xl border border-white/10 flex items-center justify-center p-1.5">
             <img src="/logo.png" alt="HiLEX" className="w-full h-full object-contain" />
@@ -79,13 +79,13 @@ export default function HomePage() {
       </header>
 
       {/* Hero */}
-      <div className="px-6 py-8 bg-gradient-to-b from-[#00D8FF]/10 to-transparent w-full overflow-hidden">
+      <div className="px-6 py-8 bg-gradient-to-b from-[#00D8FF]/10 to-transparent w-full">
         <h1 className="text-4xl font-black italic uppercase tracking-tighter mb-1 text-white">Market Pulse</h1>
         <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] opacity-50">Global Intelligence Feed</p>
       </div>
 
       {/* Main Grid */}
-      <main className="px-6 flex-grow pb-32 w-full overflow-hidden">
+      <main className="px-6 flex-grow pb-32 w-full">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.25em] flex items-center gap-2">
             <Activity size={12} className="text-[#00D8FF]" />
@@ -136,29 +136,29 @@ export default function HomePage() {
         title="Asset Intelligence"
       >
         {selectedMover && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-8 overflow-x-hidden max-w-full">
-            {/* Header section */}
-            <div className="flex items-center justify-between gap-4 w-full">
-              <div className="flex items-center gap-4 flex-1 min-w-0">
-                {(selectedMover.headshot_url || selectedMover.logo_url) && (
-                  <img src={selectedMover.headshot_url || selectedMover.logo_url} className="w-16 h-16 rounded-full border-2 border-white/10 bg-black/40 shadow-2xl shrink-0 object-contain" alt="" />
-                )}
-                <div className="min-w-0 overflow-hidden">
-                  <h3 className={`${getNameFontSize(selectedMover.name)} font-black italic uppercase tracking-tighter text-white leading-tight break-words`}>
-                    {selectedMover.name}
-                  </h3>
-                  <div className="mt-1">
-                    <span className="text-[9px] bg-[#00D8FF]/10 text-[#00D8FF] px-2.5 py-1 rounded border border-[#00D8FF]/20 uppercase font-black tracking-[0.2em]">
-                      {selectedMover.type === 'sport' ? (selectedMover.entity_type === 'athlete' ? 'ATHLETE' : 'TEAM') : selectedMover.type}
-                    </span>
-                  </div>
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-8 overflow-x-hidden w-full">
+            {/* NEW Header section - Stacked vertically on the right */}
+            <div className="flex items-start gap-6 w-full">
+              {(selectedMover.headshot_url || selectedMover.logo_url) && (
+                <img src={selectedMover.headshot_url || selectedMover.logo_url} className="w-24 h-24 rounded-2xl border-2 border-white/10 bg-black/40 shadow-2xl shrink-0 object-contain" alt="" />
+              )}
+              <div className="flex-1 min-w-0">
+                <h3 className={`${getNameFontSize(selectedMover.name)} font-black italic uppercase tracking-tighter text-white leading-none whitespace-nowrap mb-2`}>
+                  {selectedMover.name}
+                </h3>
+                
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-[9px] bg-[#00D8FF]/10 text-[#00D8FF] px-2.5 py-1 rounded border border-[#00D8FF]/20 uppercase font-black tracking-[0.2em]">
+                    {selectedMover.type === 'sport' ? (selectedMover.entity_type === 'athlete' ? 'ATHLETE' : 'TEAM') : selectedMover.type}
+                  </span>
                 </div>
-              </div>
-              <div className="text-right shrink-0">
-                <div className={`text-4xl font-black italic leading-none mb-1 ${selectedMover.score > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {selectedMover.score > 0 ? '+' : ''}{selectedMover.score.toFixed(1)}
+
+                <div className="flex items-baseline gap-2">
+                  <span className={`text-5xl font-black italic tracking-tighter leading-none ${selectedMover.score > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {selectedMover.score > 0 ? '+' : ''}{selectedMover.score.toFixed(1)}
+                  </span>
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">HeatScore</span>
                 </div>
-                <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest">HeatScore</div>
               </div>
             </div>
 
