@@ -23,24 +23,25 @@ const forexSymbols = ['EUR/USD', 'USD/CAD', 'USD/JPY', 'AUD/USD', 'GBP/USD'];
 const commoditySymbols = ['XAU/USD', 'WTI/USD', 'NG/USD', 'XAG/USD', 'HG1'];
 const canadianStocks = ['SHOP', 'CSU', 'LSPD', 'CLS', 'SPAI'];
 
-// CLEANING FUNCTION: Flattens nested sports data into the format expected by the UI
+const allWhitelistedSymbols = [...cryptoSymbols, ...americanStocks, ...forexSymbols, ...commoditySymbols, ...canadianStocks];
+
 const flattenSportData = (data: any, sport?: string) => {
   if (!data) return {};
   const s = sport?.toLowerCase();
   const flat: any = { ...data };
 
   if (s === 'nhl') {
-    // TRIPLE FALLBACK for Athlete Stats (Lindholm Fix)
-    const playoffs = data.playoffs || data.breakdown?.playoffs || data.playoff_stats || data.stats?.playoffs;
-    const regular = data.regular_season || data.breakdown?.regular_season || data.regularSeason || data.season_stats || data.stats?.regular_season;
+    // DIRECT MAPPING FROM DESKTOP PRODUCTION: MacKinnon +1.6 fix
+    const playoffs = data.playoffs || data.breakdown?.playoffs;
+    const regular = data.regular_season || data.breakdown?.regular_season;
     
     if (playoffs) {
-      flat.gwg = playoffs.gwg || playoffs.game_winning_goals || 0;
-      flat.playoff_ppg = playoffs.ppg || playoffs.points_per_game || 0;
-      flat.last3_points = playoffs.last3_points || playoffs.last_3_points || 0;
+      flat.gwg = playoffs.gwg || 0;
+      flat.playoff_ppg = playoffs.ppg || 0;
+      flat.last3_points = playoffs.last3_points || 0;
     }
     if (regular) {
-      flat.regular_ppg = regular.ppg || regular.points_per_game || regular.pointsPerGame || 0;
+      flat.regular_ppg = regular.ppg || 0;
     }
   }
   
@@ -67,22 +68,31 @@ const calculateAverageSignal = (asset: any): number => {
 
 export const fetchMovers = async (): Promise<Mover[]> => {
   try {
-    const [stocks, caStocks, crypto, forex, commodities, entityResult] = await Promise.all([
+    // 1. Fetch Finance Assets
+    const [stocks, caStocks, crypto, forex, commodities] = await Promise.all([
       supabase.from('stocks_top_picks').select('*').in('symbol', americanStocks),
       supabase.from('ca_stocks_top_picks').select('*').in('symbol', canadianStocks),
       supabase.from('crypto_top_picks').select('*').in('symbol', cryptoSymbols),
       supabase.from('forex_top_picks').select('*').in('symbol', forexSymbols),
-      supabase.from('commodities_top_picks').select('*').in('symbol', commoditySymbols),
-      supabase.from('entity_scores').select('*')
+      supabase.from('commodities_top_picks').select('*').in('symbol', commoditySymbols)
     ]);
+
+    // 2. Fetch Entities with IDENTICAL 24H Freshness Filter as Desktop
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { data: entityData } = await supabase
+      .from('entity_scores')
+      .select('*')
+      .gte('updated_at', twentyFourHoursAgo)
+      .order('score', { ascending: false })
+      .limit(100);
 
     const movers: Mover[] = [];
 
-    const process = (data: any[] | null, type: any) => {
+    const processFinance = (data: any[] | null, type: any) => {
       data?.forEach(item => {
         movers.push({
           id: item.id,
-          name: item.symbol, 
+          name: item.stock_name || item.crypto_name || item.pair_name || item.commodity_name || item.symbol, 
           symbol: item.symbol,
           score: calculateAverageSignal(item),
           type
@@ -90,20 +100,20 @@ export const fetchMovers = async (): Promise<Mover[]> => {
       });
     };
 
-    process(stocks.data, 'stock');
-    process(caStocks.data, 'stock');
-    process(crypto.data, 'crypto');
-    process(forex.data, 'forex');
-    process(commodities.data, 'commodity');
+    processFinance(stocks.data, 'stock');
+    processFinance(caStocks.data, 'stock');
+    processFinance(crypto.data, 'crypto');
+    processFinance(forex.data, 'forex');
+    processFinance(commodities.data, 'commodity');
 
-    if (entityResult.data) {
+    if (entityData) {
       const getTop3Bottom2 = (list: any[]) => {
         if (list.length <= 5) return [...list].sort((a, b) => b.score - a.score);
         const sorted = [...list].sort((a, b) => b.score - a.score);
         return [...sorted.slice(0, 3), ...sorted.slice(-2)];
       };
 
-      const rawEntities = entityResult.data.filter(e => {
+      const rawEntities = entityData.filter(e => {
         const n = (e.name || '').trim().toUpperCase();
         const id = (e.id || '').trim().toUpperCase();
         const matchesLongId = n === id && id.length > 10;
@@ -112,9 +122,8 @@ export const fetchMovers = async (): Promise<Mover[]> => {
 
       const athletes = getTop3Bottom2(rawEntities.filter(e => e.type === 'athlete'));
       const teams = getTop3Bottom2(rawEntities.filter(e => e.type === 'team'));
-      const topEntities = [...athletes, ...teams];
       
-      topEntities.forEach(item => {
+      [...athletes, ...teams].forEach(item => {
         let displayName = item.name || '';
         const nameU = displayName.toUpperCase();
         if (nameU.includes('PARIS SAINT-GERMAIN')) displayName = 'PSG';
@@ -136,9 +145,8 @@ export const fetchMovers = async (): Promise<Mover[]> => {
       });
     }
 
-    // ALIGN WITH DESKTOP SORTING: Direct descending order by score (Top 30)
-    const sortedMovers = movers.sort((a, b) => b.score - a.score).slice(0, 30);
-    return sortedMovers;
+    // IDENTICAL SORTING LOGIC: Descending by score
+    return movers.sort((a, b) => b.score - a.score).slice(0, 30);
   } catch (err) {
     console.error('Error fetching movers:', err);
     return [];
