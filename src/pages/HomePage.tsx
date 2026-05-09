@@ -123,15 +123,15 @@ export default function HomePage() {
         title="Asset Intelligence"
       >
         {selectedMover && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Header section - Forced to match screenshot exactly */}
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-4">
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-8">
+            {/* Header section - FIXED OVERLAP */}
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center gap-4 flex-1 min-w-0">
                 {(selectedMover.headshot_url || selectedMover.logo_url) && (
-                  <img src={selectedMover.headshot_url || selectedMover.logo_url} className="w-16 h-16 rounded-full border border-white/10 bg-black/20 shadow-xl" alt="" />
+                  <img src={selectedMover.headshot_url || selectedMover.logo_url} className="w-16 h-16 rounded-full border-2 border-white/10 bg-black/40 shadow-2xl shrink-0" alt="" />
                 )}
-                <div>
-                  <h3 className="text-4xl font-black italic uppercase tracking-tighter text-white leading-none">{selectedMover.name}</h3>
+                <div className="min-w-0 overflow-hidden">
+                  <h3 className="text-4xl font-black italic uppercase tracking-tighter text-white leading-none truncate">{selectedMover.name}</h3>
                   <div className="mt-2">
                     <span className="text-[9px] bg-[#00D8FF]/10 text-[#00D8FF] px-2.5 py-1 rounded border border-[#00D8FF]/20 uppercase font-black tracking-[0.2em]">
                       {selectedMover.type === 'sport' ? (selectedMover.entity_type === 'athlete' ? 'ATHLETE' : 'TEAM') : selectedMover.type}
@@ -139,7 +139,7 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
-              <div className="text-right">
+              <div className="text-right shrink-0">
                 <div className={`text-4xl font-black italic leading-none mb-1 ${selectedMover.score > 0 ? 'text-green-400' : 'text-red-400'}`}>
                   {selectedMover.score > 0 ? '+' : ''}{selectedMover.score.toFixed(1)}
                 </div>
@@ -147,14 +147,19 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Accuracy Section - Cleaned up per request */}
+            {/* Accuracy Section - Replaced with HeatScore for Sports */}
             <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 flex justify-between items-center shadow-2xl relative overflow-hidden">
                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#00D8FF]/20 to-transparent" />
               <div>
-                <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Historical Accuracy</div>
+                <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">
+                  {selectedMover.type === 'sport' ? 'Signal Strength' : 'Historical Accuracy'}
+                </div>
+                {selectedMover.type === 'sport' && (
+                  <p className="text-[9px] text-slate-400 italic uppercase tracking-widest">Optimized Intelligence</p>
+                )}
               </div>
               <div className="text-4xl font-black text-[#00D8FF] italic drop-shadow-[0_0_15px_rgba(0,216,255,0.3)]">
-                {accuracy ? `${accuracy}%` : '--%'}
+                {selectedMover.type === 'sport' ? selectedMover.score.toFixed(1) : (accuracy ? `${accuracy}%` : '--%')}
               </div>
             </div>
 
@@ -164,7 +169,11 @@ export default function HomePage() {
                 Technical Analysis Breakdown
                 <Info size={12} className="opacity-40" />
               </h4>
-              <IndicatorGrid indicators={intelligence?.breakdown} type={selectedMover.type} />
+              <IndicatorGrid 
+                indicators={intelligence?.breakdown} 
+                type={selectedMover.type} 
+                sport={selectedMover.sport} 
+              />
             </div>
 
             {/* Monthly Snapshots - Re-designed compact version */}

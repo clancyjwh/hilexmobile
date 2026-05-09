@@ -16,11 +16,11 @@ export interface Mover {
   logo_url?: string;
 }
 
-const americanStocks = ['AAPL', 'TSLA', 'NVDA', 'MSFT', 'AMZN', 'GOOGL', 'META', 'BRK.B', 'LLY', 'AVGO'];
-const canadianStocks = ['SHOP', 'CSU', 'LSPD', 'CLS', 'SPAI', 'ATD', 'CP', 'CNI', 'TD', 'RY'];
-const cryptoSymbols = ['BTC', 'ETH', 'XRP', 'SOL', 'ADA', 'DOT', 'LINK', 'MATIC', 'AVAX', 'DOGE'];
-const forexSymbols = ['EUR/USD', 'USD/CAD', 'USD/JPY', 'AUD/USD', 'GBP/USD', 'NZD/USD', 'USD/CHF', 'EUR/GBP', 'EUR/JPY', 'GBP/JPY'];
-const commoditySymbols = ['XAU/USD', 'WTI/USD', 'NG/USD', 'XAG/USD', 'HG1', 'ZC1', 'ZS1', 'ZW1', 'KC1', 'CC1'];
+const cryptoSymbols = ['BTC', 'ETH', 'XRP', 'SOL', 'ADA'];
+const americanStocks = ['AAPL', 'TSLA', 'NVDA', 'MSFT', 'AMZN'];
+const forexSymbols = ['EUR/USD', 'USD/CAD', 'USD/JPY', 'AUD/USD', 'GBP/USD'];
+const commoditySymbols = ['XAU/USD', 'WTI/USD', 'NG/USD', 'XAG/USD', 'HG1'];
+const canadianStocks = ['SHOP', 'CSU', 'LSPD', 'CLS', 'SPAI'];
 
 const calculateAverageSignal = (asset: any): number => {
   if (asset.signal !== undefined && asset.signal !== null) {
@@ -68,24 +68,23 @@ export const fetchMovers = async (): Promise<Mover[]> => {
     process(commodities.data, 'commodity');
 
     if (entityResult.data) {
-      const getTop3Bottom2 = (list: any[]) => {
-        if (list.length <= 5) return [...list].sort((a, b) => b.score - a.score);
-        const sorted = [...list].sort((a, b) => b.score - a.score);
-        return [...sorted.slice(0, 3), ...sorted.slice(-2)];
-      };
-
       const filtered = entityResult.data.filter(e => {
-        const n = (e.name || '').trim();
-        return n && !n.toUpperCase().startsWith('UFC_') && n.length < 50;
+        const n = (e.name || '').trim().toUpperCase();
+        return n && !n.startsWith('UFC_') && n !== 'GHOST' && n.length < 50;
       });
 
-      const topAthletes = getTop3Bottom2(filtered.filter(e => e.type === 'athlete'));
-      const topTeams = getTop3Bottom2(filtered.filter(e => e.type === 'team'));
+      // Match the main app's sport selections if possible, or just top overall
+      const topEntities = filtered.sort((a, b) => b.score - a.score).slice(0, 10);
       
-      [...topAthletes, ...topTeams].forEach(item => {
+      topEntities.forEach(item => {
+        let displayName = item.name?.toUpperCase().split(' ').pop() || item.name;
+        if (item.name?.toUpperCase().includes('PARIS SAINT-GERMAIN')) displayName = 'PSG';
+        if (item.name?.toUpperCase().includes('REAL MADRID')) displayName = 'REAL';
+        if (item.name?.toUpperCase().includes('BAYERN')) displayName = 'BAYERN';
+
         movers.push({
           id: item.id,
-          name: item.name?.toUpperCase().split(' ').pop() || item.name, // Short form (e.g. MACKINNON, COL)
+          name: displayName,
           symbol: item.id,
           org: item.org,
           sport: item.sport,
@@ -98,7 +97,7 @@ export const fetchMovers = async (): Promise<Mover[]> => {
       });
     }
 
-    return movers.sort((a, b) => b.score - a.score);
+    return movers.sort((a, b) => Math.abs(b.score) - Math.abs(a.score)).slice(0, 30);
   } catch (err) {
     console.error('Error fetching movers:', err);
     return [];
@@ -110,14 +109,14 @@ export const fetchAssetIntelligence = async (mover: Mover): Promise<any> => {
     if (mover.type === 'sport') {
       const sport = mover.sport?.toLowerCase();
       if (mover.entity_type === 'team') {
-        const res = await fetch(`https://hilex-nhl-production.up.railway.app/${sport}/analyze`, {
+        const res = await fetch(`https://hilex-nhl-production.up.railway.app/${sport === 'soccer' ? 'ucl' : sport}/analyze`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ home_team: mover.id.split('_').pop(), away_team: 'AUTO' })
         });
         if (res.ok) {
           const data = await res.json();
-          const teamData = data.home_team?.code === mover.id.split('_').pop() ? data.home_team : data.away_team;
+          const teamData = data.home_team || data.away_team;
           return { breakdown: teamData?.breakdown };
         }
       } else {
@@ -161,14 +160,9 @@ export const fetchAssetIntelligence = async (mover: Mover): Promise<any> => {
 
 export const fetchAssetAccuracy = async (mover: Mover): Promise<number | null> => {
   try {
+    if (mover.type === 'sport') return null; // Force HeatScore display for sports
+
     const { data } = await supabase.from('asset_accuracy_summary').select('accuracy_pct').eq('asset', mover.symbol).maybeSingle();
-    if (data) return Math.round(data.accuracy_pct);
-    
-    if (mover.type === 'sport') {
-      const res = await fetch('https://hilex-nhl-production.up.railway.app/accuracy');
-      const d = await res.json();
-      return d.by_sport?.[mover.sport?.toLowerCase() || '']?.accuracy || null;
-    }
-    return null;
+    return data ? Math.round(data.accuracy_pct) : null;
   } catch { return null; }
 };
