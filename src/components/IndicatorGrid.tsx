@@ -15,9 +15,9 @@ const getIndicatorColor = (score: number) => {
 export default function IndicatorGrid({ indicators, type }: IndicatorGridProps) {
   if (!indicators) {
     return (
-      <div className="grid grid-cols-3 gap-3">
-        {[1, 2, 3, 4, 5, 6].map(i => (
-          <div key={i} className="h-16 bg-white/5 rounded-2xl animate-pulse" />
+      <div className="grid grid-cols-2 gap-2">
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="h-12 bg-white/5 rounded-xl animate-pulse" />
         ))}
       </div>
     );
@@ -26,68 +26,58 @@ export default function IndicatorGrid({ indicators, type }: IndicatorGridProps) 
   let displayIndicators: { name: string; score: number }[] = [];
 
   if (type === 'sport') {
-    // Mapping for sports indicators
+    // Parity with desktop sports indicator labels
     const sportsMapping: Record<string, string> = {
-      'win_pct': 'WIN%',
+      'win_pct': 'WIN %',
       'last_10': 'L10',
-      'fg_pct': 'FG%',
-      'three_pt_pct': '3PT%',
-      'rebounding': 'REB',
+      'fg_pct': 'FG %',
+      'three_pt_pct': '3PT %',
       'streak': 'STRK',
+      'home_away': 'H/A',
+      'rebounding': 'REB',
       'striking_accuracy': 'STRK',
-      'grappling': 'GRAP',
-      'finish_rate': 'FINISH'
+      'finish_rate': 'FINISH',
+      'rebound_rate': 'REB'
     };
 
     displayIndicators = Object.keys(sportsMapping)
       .filter(key => indicators[key] !== undefined)
-      .slice(0, 6)
       .map(key => ({
         name: sportsMapping[key],
-        score: typeof indicators[key] === 'number' ? indicators[key] : (indicators[key]?.signal || 0)
-      }));
+        score: typeof indicators[key] === 'number' ? indicators[key] : (parseFloat(indicators[key]?.signal || '0'))
+      }))
+      .slice(0, 6);
   } else {
-    // Mapping for financial indicators
+    // Parity with desktop financial indicator labels
     const financeMapping: Record<string, string> = {
-      'CCI': 'CCI',
-      'RSI': 'RSI',
       'SMA': 'SMA',
+      'RSI': 'RSI',
       'Bollinger': 'BOLL',
+      'CCI': 'CCI',
       'MACD': 'MACD',
-      'ROC': 'ROC',
-      'Rate_of_Change': 'ROC'
+      'ROC': 'ROC'
     };
 
     displayIndicators = Object.keys(financeMapping)
       .filter(key => indicators[key] !== undefined)
-      .slice(0, 6)
       .map(key => ({
         name: financeMapping[key],
-        score: indicators[key]?.signal !== undefined ? indicators[key].signal : (typeof indicators[key] === 'number' ? indicators[key] : 0)
-      }));
+        score: typeof indicators[key]?.signal === 'number' ? indicators[key].signal : parseFloat(indicators[key]?.signal || '0')
+      }))
+      .slice(0, 6);
   }
 
-  // Fallback if no indicators matched
-  if (displayIndicators.length === 0) {
-    displayIndicators = [
-      { name: 'CCI', score: 0 },
-      { name: 'RSI', score: 0 },
-      { name: 'SMA', score: 0 },
-      { name: 'BOLL', score: 0 },
-      { name: 'MACD', score: 0 },
-      { name: 'ROC', score: 0 }
-    ];
-  }
+  if (displayIndicators.length === 0) return null;
 
   return (
-    <div className="grid grid-cols-3 gap-3">
+    <div className="grid grid-cols-2 gap-2">
       {displayIndicators.map((ind, i) => (
         <div 
           key={i}
-          className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all duration-500 ${getIndicatorColor(ind.score)}`}
+          className={`flex items-center justify-between p-3 rounded-xl border ${getIndicatorColor(ind.score)}`}
         >
-          <span className="text-[9px] font-black uppercase tracking-widest opacity-60 mb-1">{ind.name}</span>
-          <span className="text-sm font-black italic">
+          <span className="text-[9px] font-black uppercase tracking-widest opacity-60">{ind.name}</span>
+          <span className="text-xs font-black italic">
             {ind.score > 0 ? '+' : ''}{ind.score.toFixed(1)}
           </span>
         </div>
