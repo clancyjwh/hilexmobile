@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Bell, Menu, TrendingUp, Activity, Info } from 'lucide-react';
+import { Search, Bell, Activity, Info, TrendingUp } from 'lucide-react';
 import MoverCard from '../components/MoverCard';
 import BottomDrawer from '../components/BottomDrawer';
 import IndicatorGrid from '../components/IndicatorGrid';
 import MonthlySnapshots from '../components/MonthlySnapshots';
+import BottomNav from '../components/BottomNav';
 import { fetchMovers, Mover, fetchAssetAccuracy, fetchAssetIntelligence } from '../utils/analysis';
 
 export default function HomePage() {
@@ -77,8 +78,8 @@ export default function HomePage() {
 
       {/* Hero */}
       <div className="px-6 py-8 bg-gradient-to-b from-[#00D8FF]/10 to-transparent w-full">
-        <h1 className="text-4xl font-black italic uppercase tracking-tighter mb-1 text-white">Market Pulse</h1>
-        <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] opacity-50">Global Intelligence Feed</p>
+        <h1 className="text-4xl font-black italic uppercase tracking-tighter mb-1 text-white">Finance Pulse</h1>
+        <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] mt-1">Institutional Movers</p>
       </div>
 
       {/* Main Grid */}
@@ -110,21 +111,8 @@ export default function HomePage() {
         )}
       </main>
 
-      {/* Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 h-24 bg-[#020617]/95 backdrop-blur-2xl border-t border-white/10 px-12 flex items-center justify-between z-40 w-full">
-        <button className="text-[#00D8FF] flex flex-col items-center gap-1.5">
-          <TrendingUp size={26} />
-          <span className="text-[9px] font-black uppercase tracking-widest">MOVERS</span>
-        </button>
-        <button className="text-slate-500 flex flex-col items-center gap-1.5 opacity-40">
-          <Menu size={26} />
-          <span className="text-[9px] font-black uppercase tracking-widest">DASHBOARD</span>
-        </button>
-        <button className="text-slate-500 flex flex-col items-center gap-1.5 opacity-40">
-          <Bell size={26} />
-          <span className="text-[9px] font-black uppercase tracking-widest">ALERTS</span>
-        </button>
-      </nav>
+      {/* Standard Bottom Nav */}
+      <BottomNav />
 
       {/* Intelligence Sheet */}
       <BottomDrawer 
