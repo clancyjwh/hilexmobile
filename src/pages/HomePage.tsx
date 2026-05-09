@@ -26,13 +26,11 @@ export default function HomePage() {
   };
 
   const handleMoverClick = async (mover: Mover) => {
-    console.log('[DIAGNOSTIC] Mover Selected:', mover);
     setSelectedMover(mover);
     setAccuracy(null);
     setIntelligence(null);
     
     if (mover.prefetchedBreakdown) {
-      console.log('[DIAGNOSTIC] Using prefetched breakdown');
       setIntelligence({ breakdown: mover.prefetchedBreakdown });
       setIntelLoading(false);
     } else {
@@ -46,9 +44,8 @@ export default function HomePage() {
       ]);
       setAccuracy(acc);
       setIntelligence(intel);
-      console.log('[DIAGNOSTIC] Intelligence State Updated:', intel);
     } catch (err) {
-      console.error('[DIAGNOSTIC] Error loading intelligence:', err);
+      console.error('Error loading intelligence:', err);
     } finally {
       setIntelLoading(false);
     }
@@ -62,7 +59,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] text-white flex flex-col font-sans selection:bg-[#00D8FF]/30 overflow-x-hidden w-full">
+    <div className="min-h-screen bg-[#020617] text-white flex flex-col font-sans selection:bg-[#00D8FF]/30 overflow-x-hidden w-full max-w-full">
       {/* Header */}
       <header className="px-6 py-4 flex items-center justify-between sticky top-0 bg-[#020617]/90 backdrop-blur-xl z-40 border-b border-white/5 w-full">
         <div className="flex items-center gap-3 shrink-0">
@@ -139,35 +136,37 @@ export default function HomePage() {
         title="Asset Intelligence"
       >
         {selectedMover && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-8 overflow-x-hidden w-full">
-            {/* STABLE Header section using Grid */}
-            <div className="grid grid-cols-[auto_1fr] gap-6 items-start w-full">
-              <div className="shrink-0">
-                {(selectedMover.headshot_url || selectedMover.logo_url) ? (
-                  <img src={selectedMover.headshot_url || selectedMover.logo_url} className="w-24 h-24 rounded-2xl border-2 border-white/10 bg-black/40 shadow-2xl object-contain" alt="" />
-                ) : (
-                  <div className="w-24 h-24 rounded-2xl border-2 border-white/10 bg-slate-800 flex items-center justify-center">
-                    <TrendingUp className="text-slate-600" />
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-8 overflow-x-hidden w-full max-w-full px-1">
+            {/* STACKED HEADER: Logo Row + Info Row */}
+            <div className="flex flex-col gap-6">
+              <div className="flex items-center gap-4">
+                <div className="shrink-0">
+                  {(selectedMover.headshot_url || selectedMover.logo_url) ? (
+                    <img src={selectedMover.headshot_url || selectedMover.logo_url} className="w-20 h-20 rounded-2xl border-2 border-white/10 bg-black/40 shadow-2xl object-contain" alt="" />
+                  ) : (
+                    <div className="w-20 h-20 rounded-2xl border-2 border-white/10 bg-slate-800 flex items-center justify-center">
+                      <TrendingUp className="text-slate-600" />
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className={`${getNameFontSize(selectedMover.name)} font-black italic uppercase tracking-tighter text-white leading-tight whitespace-nowrap overflow-hidden text-ellipsis`}>
+                    {selectedMover.name}
+                  </h3>
+                  <div className="mt-1">
+                    <span className="text-[9px] bg-[#00D8FF]/10 text-[#00D8FF] px-2.5 py-1 rounded border border-[#00D8FF]/20 uppercase font-black tracking-[0.2em] inline-block">
+                      {selectedMover.type === 'sport' ? (selectedMover.entity_type === 'athlete' ? 'ATHLETE' : 'TEAM') : selectedMover.type}
+                    </span>
                   </div>
-                )}
+                </div>
               </div>
-              <div className="min-w-0 flex flex-col gap-2">
-                <h3 className={`${getNameFontSize(selectedMover.name)} font-black italic uppercase tracking-tighter text-white leading-none whitespace-nowrap overflow-hidden text-ellipsis`}>
-                  {selectedMover.name}
-                </h3>
-                
-                <div>
-                  <span className="text-[9px] bg-[#00D8FF]/10 text-[#00D8FF] px-2.5 py-1 rounded border border-[#00D8FF]/20 uppercase font-black tracking-[0.2em] inline-block">
-                    {selectedMover.type === 'sport' ? (selectedMover.entity_type === 'athlete' ? 'ATHLETE' : 'TEAM') : selectedMover.type}
-                  </span>
-                </div>
 
-                <div className="flex items-baseline gap-2 mt-auto">
-                  <span className={`text-4xl font-black italic tracking-tighter leading-none ${selectedMover.score > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {selectedMover.score > 0 ? '+' : ''}{selectedMover.score.toFixed(1)}
-                  </span>
-                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest shrink-0">HeatScore</span>
-                </div>
+              {/* HEATSCORE: Dedicated row under the name */}
+              <div className="flex items-baseline gap-3 border-t border-white/5 pt-4">
+                <span className={`text-6xl font-black italic tracking-tighter leading-none ${selectedMover.score > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {selectedMover.score > 0 ? '+' : ''}{selectedMover.score.toFixed(1)}
+                </span>
+                <span className="text-[12px] font-black text-slate-500 uppercase tracking-widest shrink-0">HeatScore Intelligence</span>
               </div>
             </div>
 

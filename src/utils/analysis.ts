@@ -134,14 +134,14 @@ export const fetchAssetIntelligence = async (mover: Mover): Promise<any> => {
       const cleanId = mover.id.split('_').pop() || mover.id;
       const dateStr = new Date().toISOString().split('T')[0];
 
-      console.log(`[DIAGNOSTIC] Fetching ${sport} ${mover.entity_type}: ${cleanId} (Date: ${dateStr})`);
-
       if (mover.entity_type === 'team') {
-        const endpoint = (sport === 'soccer' || sport === 'football') ? 'ucl' : (sport === 'football' ? 'ucl' : sport);
+        const endpoint = (sport === 'soccer' || sport === 'football' || sport === 'ucl') ? 'ucl' : sport;
         const url = `https://hilex-nhl-production.up.railway.app/${endpoint}/analyze`;
-        const body = { home_team: cleanId, away_team: 'AUTO', date: dateStr };
         
-        console.log(`[DIAGNOSTIC] POST ${url}`, body);
+        // SPECIAL CASE FOR SOCCER (UCL)
+        const body = (endpoint === 'ucl') 
+          ? { home_team_id: cleanId, away_team_id: 'AUTO', date: dateStr }
+          : { home_team: cleanId, away_team: 'AUTO', date: dateStr };
         
         const res = await fetch(url, {
           method: 'POST',
@@ -151,21 +151,16 @@ export const fetchAssetIntelligence = async (mover: Mover): Promise<any> => {
         
         if (res.ok) {
           const data = await res.json();
-          console.log(`[DIAGNOSTIC] Response for ${cleanId}:`, data);
           const teamData = data.home_team || data.away_team;
           return { breakdown: teamData?.breakdown || {} };
-        } else {
-          console.error(`[DIAGNOSTIC] API ERROR ${res.status} for ${cleanId}`);
         }
       } else {
-        const url = `https://hilex-nhl-production.up.railway.app/athletes/heatscore/${encodeURIComponent(mover.id)}`;
-        console.log(`[DIAGNOSTIC] GET ${url}`);
-        
-        const res = await fetch(url);
+        const res = await fetch(`https://hilex-nhl-production.up.railway.app/athletes/heatscore/${encodeURIComponent(mover.id)}`);
         if (res.ok) {
           const data = await res.json();
-          console.log(`[DIAGNOSTIC] Athlete Response for ${mover.id}:`, data);
-          const breakdown: any = data.breakdown || {};
+          // ATHLETE FALLBACK: Check breakdown OR root object for indicators
+          const breakdown: any = data.breakdown || data || {};
+          
           if (sport === 'nhl') {
             if (data.playoffs) {
                breakdown.gwg = data.playoffs.gwg || 0;
@@ -177,8 +172,6 @@ export const fetchAssetIntelligence = async (mover: Mover): Promise<any> => {
             }
           }
           return { breakdown };
-        } else {
-          console.error(`[DIAGNOSTIC] API ERROR ${res.status} for athlete ${mover.id}`);
         }
       }
       return { breakdown: {} };
@@ -220,10 +213,7 @@ export const fetchAssetIntelligence = async (mover: Mover): Promise<any> => {
       }
       return { breakdown: indicators, json9 };
     }
-  } catch (err) { 
-    console.error(`[DIAGNOSTIC] CRITICAL ERROR:`, err);
-    return { breakdown: {} }; 
-  }
+  } catch { return { breakdown: {} }; }
 };
 
 export const fetchAssetAccuracy = async (mover: Mover): Promise<number | null> => {
