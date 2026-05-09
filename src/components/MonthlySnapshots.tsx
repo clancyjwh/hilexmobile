@@ -25,26 +25,23 @@ export default function MonthlySnapshots({ json9 }: MonthlySnapshotsProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.25em]">Monthly Snapshots</h2>
-        <div className="text-[10px] font-black text-[#00D8FF] uppercase italic bg-[#00D8FF]/10 px-2 py-0.5 rounded border border-[#00D8FF]/20">
+        <div className="text-[10px] font-black text-[#00D8FF] uppercase italic bg-[#00D8FF]/10 px-3 py-1.5 rounded-lg border border-[#00D8FF]/30 shadow-[0_0_15px_rgba(0,216,255,0.2)]">
           Rate: {correctCount}/12
         </div>
       </div>
       
-      <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-3 flex justify-around text-[9px] font-black uppercase tracking-widest text-slate-400">
-        <div className="flex gap-2 items-center"><span className="text-[7px] opacity-50">IND:</span> <span className="text-white">{analysis}</span></div>
-        <div className="flex gap-2 items-center"><span className="text-[7px] opacity-50">PAR:</span> <span className="text-white">{parameters}</span></div>
+      <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-4 flex justify-around text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+        <div className="flex gap-2 items-center"><span className="text-[8px] opacity-40">IND:</span> <span className="text-white">{analysis}</span></div>
+        <div className="flex gap-2 items-center"><span className="text-[8px] opacity-40">PAR:</span> <span className="text-white">{parameters}</span></div>
       </div>
 
-      <div className="flex flex-wrap gap-1.5 justify-between">
+      <div className="grid grid-cols-4 gap-2.5">
         {monthlyData.map((m) => (
           <div 
             key={m.days}
-            className={`w-[48px] h-[36px] rounded-lg border flex flex-col items-center justify-center transition-all ${m.correct ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-red-500/10 border-red-500/30'}`}
+            className={`aspect-square rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-300 shadow-lg ${m.correct ? 'bg-emerald-900/40 border-emerald-600' : 'bg-red-900/40 border-red-600'}`}
           >
-            <div className="text-[10px] font-black text-white leading-none">{m.days}</div>
-            <div className={`text-[6px] font-black uppercase ${m.correct ? 'text-emerald-400' : 'text-red-400'}`}>
-              {m.correct ? 'OK' : 'ERR'}
-            </div>
+            <div className={`text-sm font-black ${m.correct ? 'text-emerald-400' : 'text-red-400'}`}>{m.days}</div>
           </div>
         ))}
       </div>

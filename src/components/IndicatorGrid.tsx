@@ -7,10 +7,15 @@ interface IndicatorGridProps {
 }
 
 const getIndicatorColor = (score: number) => {
-  if (score >= 4) return 'text-green-400 border-green-500/30 bg-green-500/10';
-  if (score >= 1) return 'text-yellow-400 border-yellow-500/30 bg-yellow-500/10';
-  if (score >= -4) return 'text-orange-400 border-orange-500/30 bg-orange-500/10';
-  return 'text-red-400 border-red-500/30 bg-red-500/10';
+  if (score >= 9) return 'bg-gradient-to-br from-[#FFFDF5] via-[#EBD48E] to-[#C9A43B] border-yellow-400 text-black shadow-[0_0_15px_rgba(201,164,59,0.4)]';
+  if (score >= 7) return 'bg-green-900 border-green-700 text-green-300';
+  if (score >= 4) return 'bg-green-700 border-green-600 text-green-200';
+  if (score >= 1) return 'bg-green-500 border-green-400 text-white';
+  if (score > -1) return 'bg-slate-700 border-slate-600 text-slate-300';
+  if (score >= -4) return 'bg-orange-500 border-orange-400 text-white';
+  if (score >= -7) return 'bg-red-600 border-red-500 text-white';
+  if (score <= -9) return 'bg-gradient-to-br from-red-900 to-red-950 border-red-600 text-red-200';
+  return 'bg-red-900 border-red-700 text-red-300';
 };
 
 export default function IndicatorGrid({ indicators, type, sport }: IndicatorGridProps) {
@@ -56,7 +61,7 @@ export default function IndicatorGrid({ indicators, type, sport }: IndicatorGrid
     if (s === 'nba') mapping = nbaMapping;
     else if (s === 'ufc' || s === 'mma') mapping = ufcMapping;
     else if (s === 'soccer' || s === 'ucl' || s === 'football') mapping = soccerMapping;
-    else mapping = nbaMapping; // Fallback to generic sports
+    else mapping = nbaMapping;
   }
 
   const displayIndicators = Object.keys(mapping).map(key => {
@@ -66,18 +71,23 @@ export default function IndicatorGrid({ indicators, type, sport }: IndicatorGrid
   });
 
   return (
-    <div className="grid grid-cols-2 gap-2">
-      {displayIndicators.map((ind, i) => (
-        <div 
-          key={i}
-          className={`flex items-center justify-between p-3 rounded-xl border ${getIndicatorColor(ind.score)} transition-colors duration-500`}
-        >
-          <span className="text-[9px] font-black uppercase tracking-widest opacity-60">{ind.name}</span>
-          <span className="text-xs font-black italic">
-            {ind.score > 0 ? '+' : ''}{ind.score.toFixed(1)}
-          </span>
-        </div>
-      ))}
+    <div className="grid grid-cols-2 gap-2.5">
+      {displayIndicators.map((ind, i) => {
+        const colorClass = getIndicatorColor(ind.score);
+        const isGold = ind.score >= 9;
+        
+        return (
+          <div 
+            key={i}
+            className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-500 shadow-lg ${colorClass}`}
+          >
+            <span className={`text-[9px] font-black uppercase tracking-widest ${isGold ? 'text-black/50' : 'opacity-60'}`}>{ind.name}</span>
+            <span className="text-sm font-black italic">
+              {ind.score > 0 ? '+' : ''}{ind.score.toFixed(1)}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }

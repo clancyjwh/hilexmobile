@@ -73,7 +73,6 @@ export const fetchMovers = async (): Promise<Mover[]> => {
         return n && !n.startsWith('UFC_') && n !== 'GHOST' && n.length < 50;
       });
 
-      // Match the main app's sport selections if possible, or just top overall
       const topEntities = filtered.sort((a, b) => b.score - a.score).slice(0, 10);
       
       topEntities.forEach(item => {
@@ -135,22 +134,33 @@ export const fetchAssetIntelligence = async (mover: Mover): Promise<any> => {
       const { data } = await supabase.from(category).select('*').ilike('symbol', mover.symbol).order('date', { ascending: false }).limit(1).maybeSingle();
       if (!data) return null;
 
-      let indicators = data.indicators;
+      let indicators = data.indicators || {};
       let json9 = data.optimized_parameters;
 
       if (data.raw_data) {
         const raw = typeof data.raw_data === 'string' ? JSON.parse(data.raw_data) : data.raw_data;
-        if (!indicators && raw['JSON 1']) {
-          const j1 = typeof raw['JSON 1'] === 'string' ? JSON.parse(raw['JSON 1']) : raw['JSON 1'];
-          indicators = {
-            SMA: { signal: parseFloat(j1['SMA Signal'] || '0') },
-            RSI: { signal: parseFloat(j1['RSI Signal'] || '0') },
-            Bollinger: { signal: parseFloat(j1['Boll Signal'] || '0') },
-            CCI: { signal: parseFloat(j1['CCI Signal'] || '0') },
-            MACD: { signal: parseFloat(j1['MACD Signal'] || '0') },
-            ROC: { signal: parseFloat(j1['ROC Signal'] || '0') }
+        const j1 = typeof raw['JSON 1'] === 'string' ? JSON.parse(raw['JSON 1']) : raw['JSON 1'];
+        
+        if (j1) {
+          // Force override with JSON 1 if missing or 0, matching main app logic
+          const map = {
+            SMA: 'SMA Signal',
+            RSI: 'RSI Signal',
+            Bollinger: 'Boll Signal',
+            CCI: 'CCI Signal',
+            MACD: 'MACD Signal',
+            ROC: 'ROC Signal'
           };
+          
+          Object.entries(map).forEach(([key, j1Key]) => {
+            if (!indicators[key] || parseFloat(indicators[key].signal || '0') === 0) {
+              if (j1[j1Key] !== undefined) {
+                indicators[key] = { signal: parseFloat(j1[j1Key]) };
+              }
+            }
+          });
         }
+        
         if (!json9 && raw['JSON 9']) json9 = typeof raw['JSON 9'] === 'string' ? JSON.parse(raw['JSON 9']) : raw['JSON 9'];
       }
       return { breakdown: indicators, json9 };
@@ -160,7 +170,7 @@ export const fetchAssetIntelligence = async (mover: Mover): Promise<any> => {
 
 export const fetchAssetAccuracy = async (mover: Mover): Promise<number | null> => {
   try {
-    if (mover.type === 'sport') return null; // Force HeatScore display for sports
+    if (mover.type === 'sport') return null;
 
     const { data } = await supabase.from('asset_accuracy_summary').select('accuracy_pct').eq('asset', mover.symbol).maybeSingle();
     return data ? Math.round(data.accuracy_pct) : null;
