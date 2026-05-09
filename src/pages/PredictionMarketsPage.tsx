@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Sparkles, ChevronDown, Zap, AlertTriangle, TrendingUp, TrendingDown, Info } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import BottomNav from '../components/BottomNav';
+import { formatScore, getScoreColorHex } from '../utils/format';
 
 interface MarketItem {
   question: string;
@@ -15,16 +16,6 @@ interface MarketItem {
   breakdown?: any;
 }
 
-const getScoreColor = (score: number) => {
-  if (score >= 7) return 'text-[#00d4aa]';
-  if (score >= 4) return 'text-[#00d4aa] opacity-80';
-  if (score >= 1) return 'text-[#00d4aa] opacity-60';
-  if (score > -1) return 'text-slate-500';
-  if (score >= -4) return 'text-[#ef4444] opacity-60';
-  if (score >= -7) return 'text-[#ef4444] opacity-80';
-  return 'text-[#ef4444]';
-};
-
 export default function PredictionMarketsPage() {
   const [searchInput, setSearchInput] = useState('');
   const [questions, setQuestions] = useState<MarketItem[]>([]);
@@ -32,7 +23,6 @@ export default function PredictionMarketsPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const trackEvent = (description: string, slug: string | null = null) => {
-    // IDENTICAL WEBHOOK TARGET & DATA STRUCTURE
     fetch('https://hook.us2.make.com/5qbkt4iyi3e52o8auyjssk4bxar6f8ay', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -42,7 +32,7 @@ export default function PredictionMarketsPage() {
         slug: slug === 'null' ? null : slug,
         source: 'mobile'
       })
-    }).catch(() => {}); // Fire and forget as requested
+    }).catch(() => {});
   };
 
   const parseMarketItem = (raw: string): MarketItem => {
@@ -108,9 +98,9 @@ export default function PredictionMarketsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-300 font-sans pb-32">
-      {/* Header & Search */}
-      <div className="px-6 pt-12 pb-8 bg-gradient-to-b from-[#00d4aa]/10 to-transparent">
+    <div className="min-h-screen bg-[#020617] text-slate-300 font-sans pb-32 flex flex-col">
+      {/* Header & Search (Padded for Global Header) */}
+      <div className="px-6 pt-24 pb-8 bg-gradient-to-b from-[#00d4aa]/10 to-transparent">
         <div className="mb-8">
           <h1 className="text-4xl font-black italic uppercase tracking-tighter text-white leading-none">Prediction Markets</h1>
           <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] mt-2">Institutional Event Analysis</p>
@@ -204,8 +194,8 @@ export default function PredictionMarketsPage() {
                           <div className="flex items-center justify-around">
                             <div className="text-center">
                               <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1 block">HeatScore</span>
-                              <span className={`text-4xl font-black italic tracking-tighter ${getScoreColor(item.event_score)}`}>
-                                {item.event_score > 0 ? '+' : ''}{item.event_score}
+                              <span className={`text-4xl font-black italic tracking-tighter ${getScoreColorHex(item.event_score / 10)}`}>
+                                {item.event_score > 0 ? '+' : ''}{formatScore(item.event_score / 10)}
                               </span>
                             </div>
                             <div className="h-10 w-[1px] bg-white/10" />
@@ -218,11 +208,11 @@ export default function PredictionMarketsPage() {
                           <div className="grid grid-cols-2 gap-3">
                             <div className="bg-white/5 rounded-2xl p-5 border border-white/5">
                               <div className="text-[8px] font-black text-slate-600 uppercase tracking-widest mb-1">Sentiment</div>
-                              <div className="text-xl font-black text-white italic">{(parseFloat(item.breakdown?.["News & Sentiment score"] || 0) * 10).toFixed(1)}</div>
+                              <div className="text-xl font-black text-white italic">{formatScore(parseFloat(item.breakdown?.["News & Sentiment score"] || 0) * 10)}</div>
                             </div>
                             <div className="bg-white/5 rounded-2xl p-5 border border-white/5">
                               <div className="text-[8px] font-black text-slate-600 uppercase tracking-widest mb-1">Momentum</div>
-                              <div className="text-xl font-black text-white italic">{(parseFloat(item.breakdown?.["Recent Momentum"] || 0) * 10).toFixed(1)}</div>
+                              <div className="text-xl font-black text-white italic">{formatScore(parseFloat(item.breakdown?.["Recent Momentum"] || 0) * 10)}</div>
                             </div>
                           </div>
 

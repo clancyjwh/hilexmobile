@@ -4,6 +4,7 @@ import SignupPage from './pages/SignupPage';
 import HomePage from './pages/HomePage';
 import SportsPage from './pages/SportsPage';
 import PredictionMarketsPage from './pages/PredictionMarketsPage';
+import HomeDashboard from './pages/HomeDashboard';
 
 function App() {
   return (
@@ -11,13 +12,20 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
-        {/* Redirect to login by default */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        
+        {/* Protected Routes */}
+        <Route path="/" element={<HomeDashboard />} />
         <Route path="/finance" element={<HomePage />} />
         <Route path="/sports" element={<SportsPage />} />
         <Route path="/prediction-markets" element={<PredictionMarketsPage />} />
-        {/* Legacy redirect */}
-        <Route path="/home" element={<Navigate to="/finance" replace />} />
+        
+        {/* Static Drawer Placeholders */}
+        <Route path="/account" element={<HomeDashboard />} />
+        <Route path="/alerts" element={<HomeDashboard />} />
+        <Route path="/settings" element={<HomeDashboard />} />
+        
+        {/* Catch-all redirect */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );

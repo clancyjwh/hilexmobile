@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Bell, Activity, Info, TrendingUp } from 'lucide-react';
+import { Activity, Info, TrendingUp } from 'lucide-react';
 import MoverCard from '../components/MoverCard';
 import BottomDrawer from '../components/BottomDrawer';
 import IndicatorGrid from '../components/IndicatorGrid';
 import MonthlySnapshots from '../components/MonthlySnapshots';
 import BottomNav from '../components/BottomNav';
 import { fetchMovers, Mover, fetchAssetAccuracy, fetchAssetIntelligence } from '../utils/analysis';
+import { formatScore } from '../utils/format';
 
 export default function HomePage() {
   const [movers, setMovers] = useState<Mover[]>([]);
@@ -58,26 +59,8 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#020617] text-white flex flex-col font-sans selection:bg-[#00D8FF]/30 overflow-x-hidden w-full max-w-full">
-      {/* Header */}
-      <header className="px-6 py-4 flex items-center justify-between sticky top-0 bg-[#020617]/90 backdrop-blur-xl z-40 border-b border-white/5 w-full">
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="w-9 h-9 bg-white/5 rounded-xl border border-white/10 flex items-center justify-center p-1.5">
-            <img src="/logo.png" alt="HiLEX" className="w-full h-full object-contain" />
-          </div>
-          <span className="font-black text-2xl tracking-tighter uppercase italic text-white">HiLEX</span>
-        </div>
-        <div className="flex items-center gap-4 shrink-0">
-          <button className="p-2.5 bg-white/5 rounded-full text-slate-400 active:text-[#00D8FF]">
-            <Search size={20} />
-          </button>
-          <button className="p-2.5 bg-white/5 rounded-full text-slate-400 active:text-[#00D8FF]">
-            <Bell size={20} />
-          </button>
-        </div>
-      </header>
-
-      {/* Hero */}
-      <div className="px-6 py-8 bg-gradient-to-b from-[#00D8FF]/10 to-transparent w-full">
+      {/* Hero (Padded for header) */}
+      <div className="px-6 py-8 bg-gradient-to-b from-[#00D8FF]/10 to-transparent w-full pt-20">
         <h1 className="text-4xl font-black italic uppercase tracking-tighter mb-1 text-white">Finance Pulse</h1>
         <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] mt-1">Institutional Movers</p>
       </div>
@@ -149,7 +132,7 @@ export default function HomePage() {
               {/* CLEAN NUMBER: 7xl with stabilization */}
               <div className="flex items-center border-t border-white/5 pt-4">
                 <span className={`text-7xl font-black italic tracking-tighter leading-[0.8] py-2 ${displayScore > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {displayScore > 0 ? '+' : ''}{displayScore.toFixed(1)}
+                  {displayScore > 0 ? '+' : ''}{formatScore(displayScore)}
                 </span>
               </div>
             </div>
