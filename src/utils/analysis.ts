@@ -27,21 +27,26 @@ const canadianStocks = ['SHOP', 'CSU', 'LSPD', 'CLS', 'SPAI'];
 const flattenSportData = (data: any, sport?: string) => {
   if (!data) return {};
   const s = sport?.toLowerCase();
+  
+  // If the data is from the live Athlete API, it might be nested under 'regular_season' etc.
   const flat: any = { ...data };
 
-  // NHL Athlete Flattening
   if (s === 'nhl') {
-    if (data.playoffs) {
-      flat.gwg = data.playoffs.gwg || 0;
-      flat.playoff_ppg = data.playoffs.ppg || 0;
-      flat.last3_points = data.playoffs.last3_points || 0; // CORRECTED KEY
+    // Check both root level and nested levels (the Live API returns these nested)
+    const playoffs = data.playoffs || data.breakdown?.playoffs;
+    const regular = data.regular_season || data.breakdown?.regular_season;
+    
+    if (playoffs) {
+      flat.gwg = playoffs.gwg || 0;
+      flat.playoff_ppg = playoffs.ppg || 0;
+      flat.last3_points = playoffs.last3_points || 0;
     }
-    if (data.regular_season) {
-      flat.regular_ppg = data.regular_season.ppg || 0;
+    if (regular) {
+      flat.regular_ppg = regular.ppg || 0;
     }
   }
   
-  // Flatten breakdown if it exists as a property
+  // Flatten breakdown if it exists as a property (common in Team stats)
   if (data.breakdown) {
     Object.assign(flat, flattenSportData(data.breakdown, sport));
   }
@@ -129,9 +134,8 @@ export const fetchMovers = async (): Promise<Mover[]> => {
           type: 'sport',
           entity_type: item.type,
           headshot_url: item.headshot_url,
-          logo_url: item.logo_url,
-          // APPLY FLATTENING TO PRE-FETCHED DATA
-          prefetchedBreakdown: flattenSportData(item.breakdown, item.sport)
+          logo_url: item.logo_url
+          // REMOVED prefetchedBreakdown: Force live fetch for absolute parity
         });
       });
     }
@@ -146,40 +150,36 @@ export const fetchMovers = async (): Promise<Mover[]> => {
 
 export const fetchAssetIntelligence = async (mover: Mover): Promise<any> => {
   try {
-    if (mover.prefetchedBreakdown) return { breakdown: mover.prefetchedBreakdown };
-
+    // ALWAYS fetch live data for sports entities to ensure 1:1 parity with detail pages
     if (mover.type === 'sport') {
       const sport = mover.sport?.toLowerCase();
       const cleanId = mover.id.split('_').pop() || mover.id;
       const dateStr = new Date().toISOString().split('T')[0];
 
       if (mover.entity_type === 'team') {
-        const endpoint = (sport === 'soccer' || sport === 'football' || sport === 'ucl') ? 'ucl' : sport;
-        const url = `https://hilex-nhl-production.up.railway.app/${endpoint}/analyze`;
-        const body = (endpoint === 'ucl') 
-          ? { home_team_id: cleanId, away_team_id: 'AUTO', date: dateStr }
-          : { home_team: cleanId, away_team: 'AUTO', date: dateStr };
-        
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
-        
-        if (res.ok) {
-          const data = await res.json();
-          const teamData = data.home_team || data.away_team;
-          return { breakdown: flattenSportData(teamData?.breakdown, sport) };
+        // For teams without prefetched data, we use the Entity Score snapshot as it's the only single-team source
+        // BUT we check Supabase again to see if there's a fresher record than what's in the mover list
+        const { data: latestTeam } = await supabase.from('entity_scores').select('breakdown, score').eq('id', mover.id).maybeSingle();
+        if (latestTeam) {
+          return { 
+            breakdown: flattenSportData(latestTeam.breakdown, sport),
+            score: latestTeam.score 
+          };
         }
       } else {
+        // ATHLETE: Call the LIVE API (This is the source of truth for MacKinnon's +6.8 and +9.0)
         const res = await fetch(`https://hilex-nhl-production.up.railway.app/athletes/heatscore/${encodeURIComponent(mover.id)}`);
         if (res.ok) {
           const data = await res.json();
-          return { breakdown: flattenSportData(data, sport) };
+          return { 
+            breakdown: flattenSportData(data, sport),
+            score: data.score // Use the LIVE score, not the cached mover score
+          };
         }
       }
       return { breakdown: {} };
     } else {
+      // Finance logic remains the same
       const category = mover.type === 'stock' ? (canadianStocks.includes(mover.symbol) ? 'ca_stocks_top_picks' : 'stocks_top_picks') : 
                        mover.type === 'crypto' ? 'crypto_top_picks' : 
                        mover.type === 'forex' ? 'forex_top_picks' : 'commodities_top_picks';

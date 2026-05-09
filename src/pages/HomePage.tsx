@@ -11,7 +11,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [selectedMover, setSelectedMover] = useState<Mover | null>(null);
   const [accuracy, setAccuracy] = useState<number | null>(null);
-  const [intelligence, setIntelligence] = useState<{ breakdown: any; json9?: any } | null>(null);
+  const [intelligence, setIntelligence] = useState<{ breakdown: any; json9?: any; score?: number } | null>(null);
   const [intelLoading, setIntelLoading] = useState(false);
 
   useEffect(() => {
@@ -29,18 +29,12 @@ export default function HomePage() {
     setSelectedMover(mover);
     setAccuracy(null);
     setIntelligence(null);
-    
-    if (mover.prefetchedBreakdown) {
-      setIntelligence({ breakdown: mover.prefetchedBreakdown });
-      setIntelLoading(false);
-    } else {
-      setIntelLoading(true);
-    }
+    setIntelLoading(true);
     
     try {
       const [acc, intel] = await Promise.all([
         fetchAssetAccuracy(mover),
-        mover.prefetchedBreakdown ? Promise.resolve({ breakdown: mover.prefetchedBreakdown }) : fetchAssetIntelligence(mover)
+        fetchAssetIntelligence(mover)
       ]);
       setAccuracy(acc);
       setIntelligence(intel);
@@ -57,6 +51,9 @@ export default function HomePage() {
     if (name.length > 8) return 'text-3xl';
     return 'text-4xl';
   };
+
+  // Determine the score to display (Prefer the live intelligence score over the mover list score)
+  const displayScore = intelligence?.score !== undefined ? intelligence.score : selectedMover?.score || 0;
 
   return (
     <div className="min-h-screen bg-[#020617] text-white flex flex-col font-sans selection:bg-[#00D8FF]/30 overflow-x-hidden w-full max-w-full">
@@ -161,10 +158,10 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* CLEAN NUMBER: Just the score, no labels */}
+              {/* CLEAN NUMBER: Use the displayScore (Syncs live data) */}
               <div className="flex items-center border-t border-white/5 pt-4">
-                <span className={`text-7xl font-black italic tracking-tighter leading-none ${selectedMover.score > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {selectedMover.score > 0 ? '+' : ''}{selectedMover.score.toFixed(1)}
+                <span className={`text-7xl font-black italic tracking-tighter leading-none ${displayScore > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {displayScore > 0 ? '+' : ''}{displayScore.toFixed(1)}
                 </span>
               </div>
             </div>
