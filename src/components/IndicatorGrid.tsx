@@ -28,6 +28,18 @@ export default function IndicatorGrid({ indicators, type, sport }: IndicatorGrid
     'ROC': 'ROC'
   };
 
+  const nhlMapping: Record<string, string> = {
+    'points_pct': 'Points %',
+    'last_10': 'Last 10',
+    'goal_diff': 'Goal Diff',
+    'home_away': 'Venue Edge',
+    'streak': 'Streak',
+    'goalie': 'Goalie',
+    'h2h': 'H2H History',
+    'rest': 'Rest Edge',
+    'series': 'Series Factor'
+  };
+
   const nbaMapping: Record<string, string> = {
     'win_rate': 'WIN %',
     'recent_form': 'L10',
@@ -42,23 +54,22 @@ export default function IndicatorGrid({ indicators, type, sport }: IndicatorGrid
     'striking_accuracy': 'STRK ACC',
     'striking_defense': 'STRK DEF',
     'takedown_defense': 'TD DEF',
-    'finish_rate': 'FINISH',
-    'grappling_accuracy': 'GRAP ACC'
+    'finish_rate': 'FINISH'
   };
 
   const soccerMapping: Record<string, string> = {
     'recent_form': 'FORM',
     'goal_difference': 'GD',
     'home_away': 'H/A',
-    'win_rate': 'WIN %',
-    'clean_sheets': 'CS',
-    'rest_days': 'REST'
+    'win_rate': 'WIN %'
   };
 
   let mapping = financeMapping;
   const s = sport?.toLowerCase();
+  
   if (type === 'sport') {
-    if (s === 'nba') mapping = nbaMapping;
+    if (s === 'nhl') mapping = nhlMapping;
+    else if (s === 'nba') mapping = nbaMapping;
     else if (s === 'ufc' || s === 'mma') mapping = ufcMapping;
     else if (s === 'soccer' || s === 'ucl' || s === 'football') mapping = soccerMapping;
     else mapping = nbaMapping;
@@ -71,7 +82,7 @@ export default function IndicatorGrid({ indicators, type, sport }: IndicatorGrid
   });
 
   return (
-    <div className="grid grid-cols-2 gap-2.5">
+    <div className={`grid ${displayIndicators.length > 6 ? 'grid-cols-2' : 'grid-cols-2'} gap-2.5`}>
       {displayIndicators.map((ind, i) => {
         const colorClass = getIndicatorColor(ind.score);
         const isGold = ind.score >= 9;

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Bell, Menu, TrendingUp, Activity, Info } from 'lucide-react';
+import { Search, Bell, Menu, TrendingUp, Activity, Info, X } from 'lucide-react';
 import MoverCard from '../components/MoverCard';
 import BottomDrawer from '../components/BottomDrawer';
 import IndicatorGrid from '../components/IndicatorGrid';
@@ -124,11 +124,11 @@ export default function HomePage() {
       >
         {selectedMover && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-8">
-            {/* Header section - FIXED OVERLAP */}
-            <div className="flex items-start justify-between gap-4">
+            {/* Header section - FIXED OVERLAP & SPACING */}
+            <div className="flex items-center justify-between gap-6">
               <div className="flex items-center gap-4 flex-1 min-w-0">
                 {(selectedMover.headshot_url || selectedMover.logo_url) && (
-                  <img src={selectedMover.headshot_url || selectedMover.logo_url} className="w-16 h-16 rounded-full border-2 border-white/10 bg-black/40 shadow-2xl shrink-0" alt="" />
+                  <img src={selectedMover.headshot_url || selectedMover.logo_url} className="w-16 h-16 rounded-full border-2 border-white/10 bg-black/40 shadow-2xl shrink-0 object-contain" alt="" />
                 )}
                 <div className="min-w-0 overflow-hidden">
                   <h3 className="text-4xl font-black italic uppercase tracking-tighter text-white leading-none truncate">{selectedMover.name}</h3>
@@ -147,21 +147,20 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Accuracy Section - Replaced with HeatScore for Sports */}
-            <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 flex justify-between items-center shadow-2xl relative overflow-hidden">
-               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#00D8FF]/20 to-transparent" />
-              <div>
-                <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">
-                  {selectedMover.type === 'sport' ? 'Signal Strength' : 'Historical Accuracy'}
+            {/* Accuracy Section - ONLY for Finance */}
+            {selectedMover.type !== 'sport' && (
+              <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 flex justify-between items-center shadow-2xl relative overflow-hidden">
+                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#00D8FF]/20 to-transparent" />
+                <div>
+                  <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">
+                    Historical Accuracy
+                  </div>
                 </div>
-                {selectedMover.type === 'sport' && (
-                  <p className="text-[9px] text-slate-400 italic uppercase tracking-widest">Optimized Intelligence</p>
-                )}
+                <div className="text-4xl font-black text-[#00D8FF] italic drop-shadow-[0_0_15px_rgba(0,216,255,0.3)]">
+                  {accuracy ? `${accuracy}%` : '--%'}
+                </div>
               </div>
-              <div className="text-4xl font-black text-[#00D8FF] italic drop-shadow-[0_0_15px_rgba(0,216,255,0.3)]">
-                {selectedMover.type === 'sport' ? selectedMover.score.toFixed(1) : (accuracy ? `${accuracy}%` : '--%')}
-              </div>
-            </div>
+            )}
 
             {/* Analysis Breakdown */}
             <div className="space-y-4">
@@ -176,8 +175,8 @@ export default function HomePage() {
               />
             </div>
 
-            {/* Monthly Snapshots - Re-designed compact version */}
-            {intelligence?.json9 && (
+            {/* Monthly Snapshots - Finance Only */}
+            {intelligence?.json9 && selectedMover.type !== 'sport' && (
               <MonthlySnapshots json9={intelligence.json9} />
             )}
 

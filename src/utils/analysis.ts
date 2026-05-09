@@ -108,10 +108,11 @@ export const fetchAssetIntelligence = async (mover: Mover): Promise<any> => {
     if (mover.type === 'sport') {
       const sport = mover.sport?.toLowerCase();
       if (mover.entity_type === 'team') {
-        const res = await fetch(`https://hilex-nhl-production.up.railway.app/${sport === 'soccer' ? 'ucl' : sport}/analyze`, {
+        const endpoint = sport === 'soccer' ? 'ucl' : sport;
+        const res = await fetch(`https://hilex-nhl-production.up.railway.app/${endpoint}/analyze`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ home_team: mover.id.split('_').pop(), away_team: 'AUTO' })
+          body: JSON.stringify(sport === 'nhl' ? { home_team: mover.id } : { home_team: mover.id.split('_').pop(), away_team: 'AUTO' })
         });
         if (res.ok) {
           const data = await res.json();
@@ -142,7 +143,6 @@ export const fetchAssetIntelligence = async (mover: Mover): Promise<any> => {
         const j1 = typeof raw['JSON 1'] === 'string' ? JSON.parse(raw['JSON 1']) : raw['JSON 1'];
         
         if (j1) {
-          // Force override with JSON 1 if missing or 0, matching main app logic
           const map = {
             SMA: 'SMA Signal',
             RSI: 'RSI Signal',
