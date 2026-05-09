@@ -3,6 +3,7 @@ import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import HomePage from './pages/HomePage';
 import SportsPage from './pages/SportsPage';
+import PredictionMarketsPage from './pages/PredictionMarketsPage';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/finance" element={<HomePage />} />
         <Route path="/sports" element={<SportsPage />} />
+        <Route path="/prediction-markets" element={<PredictionMarketsPage />} />
         {/* Legacy redirect */}
         <Route path="/home" element={<Navigate to="/finance" replace />} />
       </Routes>
