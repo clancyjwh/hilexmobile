@@ -4,6 +4,7 @@ interface IndicatorGridProps {
   indicators: any;
   type?: string;
   sport?: string;
+  entityType?: 'athlete' | 'team';
 }
 
 const getIndicatorColor = (score: number) => {
@@ -18,7 +19,7 @@ const getIndicatorColor = (score: number) => {
   return 'bg-red-900 border-red-700 text-red-300';
 };
 
-export default function IndicatorGrid({ indicators, type, sport }: IndicatorGridProps) {
+export default function IndicatorGrid({ indicators, type, sport, entityType }: IndicatorGridProps) {
   const financeMapping: Record<string, string> = {
     'SMA': 'SMA',
     'RSI': 'RSI',
@@ -28,7 +29,7 @@ export default function IndicatorGrid({ indicators, type, sport }: IndicatorGrid
     'ROC': 'ROC'
   };
 
-  const nhlMapping: Record<string, string> = {
+  const nhlTeamMapping: Record<string, string> = {
     'points_pct': 'Points %',
     'last_10': 'Last 10',
     'goal_diff': 'Goal Diff',
@@ -38,6 +39,13 @@ export default function IndicatorGrid({ indicators, type, sport }: IndicatorGrid
     'h2h': 'H2H History',
     'rest': 'Rest Edge',
     'series': 'Series Factor'
+  };
+
+  const nhlAthleteMapping: Record<string, string> = {
+    'gwg': 'GWG',
+    'playoff_ppg': 'Playoff PPG',
+    'last3_pts': 'Last 3 P',
+    'regular_ppg': 'Regular PPG'
   };
 
   const nbaMapping: Record<string, string> = {
@@ -68,7 +76,9 @@ export default function IndicatorGrid({ indicators, type, sport }: IndicatorGrid
   const s = sport?.toLowerCase();
   
   if (type === 'sport') {
-    if (s === 'nhl') mapping = nhlMapping;
+    if (s === 'nhl') {
+      mapping = entityType === 'athlete' ? nhlAthleteMapping : nhlTeamMapping;
+    }
     else if (s === 'nba') mapping = nbaMapping;
     else if (s === 'ufc' || s === 'mma') mapping = ufcMapping;
     else if (s === 'soccer' || s === 'ucl' || s === 'football') mapping = soccerMapping;
@@ -82,7 +92,7 @@ export default function IndicatorGrid({ indicators, type, sport }: IndicatorGrid
   });
 
   return (
-    <div className={`grid ${displayIndicators.length > 6 ? 'grid-cols-2' : 'grid-cols-2'} gap-2.5`}>
+    <div className={`grid ${displayIndicators.length > 6 ? 'grid-cols-2' : (displayIndicators.length <= 4 ? 'grid-cols-1' : 'grid-cols-2')} gap-2.5`}>
       {displayIndicators.map((ind, i) => {
         const colorClass = getIndicatorColor(ind.score);
         const isGold = ind.score >= 9;

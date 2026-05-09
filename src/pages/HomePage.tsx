@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Bell, Menu, TrendingUp, Activity, Info, X } from 'lucide-react';
+import { Search, Bell, Menu, TrendingUp, Activity, Info } from 'lucide-react';
 import MoverCard from '../components/MoverCard';
 import BottomDrawer from '../components/BottomDrawer';
 import IndicatorGrid from '../components/IndicatorGrid';
@@ -29,12 +29,19 @@ export default function HomePage() {
     setSelectedMover(mover);
     setAccuracy(null);
     setIntelligence(null);
-    setIntelLoading(true);
+    
+    // If we have prefetched data, use it immediately
+    if (mover.prefetchedBreakdown) {
+      setIntelligence({ breakdown: mover.prefetchedBreakdown });
+      setIntelLoading(false);
+    } else {
+      setIntelLoading(true);
+    }
     
     try {
       const [acc, intel] = await Promise.all([
         fetchAssetAccuracy(mover),
-        fetchAssetIntelligence(mover)
+        mover.prefetchedBreakdown ? Promise.resolve({ breakdown: mover.prefetchedBreakdown }) : fetchAssetIntelligence(mover)
       ]);
       setAccuracy(acc);
       setIntelligence(intel);
@@ -124,14 +131,16 @@ export default function HomePage() {
       >
         {selectedMover && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-8">
-            {/* Header section - FIXED OVERLAP & SPACING */}
+            {/* Header section */}
             <div className="flex items-center justify-between gap-6">
               <div className="flex items-center gap-4 flex-1 min-w-0">
                 {(selectedMover.headshot_url || selectedMover.logo_url) && (
                   <img src={selectedMover.headshot_url || selectedMover.logo_url} className="w-16 h-16 rounded-full border-2 border-white/10 bg-black/40 shadow-2xl shrink-0 object-contain" alt="" />
                 )}
                 <div className="min-w-0 overflow-hidden">
-                  <h3 className="text-4xl font-black italic uppercase tracking-tighter text-white leading-none truncate">{selectedMover.name}</h3>
+                  <h3 className={`${selectedMover.name.length > 10 ? 'text-2xl' : 'text-4xl'} font-black italic uppercase tracking-tighter text-white leading-none truncate`}>
+                    {selectedMover.name}
+                  </h3>
                   <div className="mt-2">
                     <span className="text-[9px] bg-[#00D8FF]/10 text-[#00D8FF] px-2.5 py-1 rounded border border-[#00D8FF]/20 uppercase font-black tracking-[0.2em]">
                       {selectedMover.type === 'sport' ? (selectedMover.entity_type === 'athlete' ? 'ATHLETE' : 'TEAM') : selectedMover.type}
@@ -165,13 +174,14 @@ export default function HomePage() {
             {/* Analysis Breakdown */}
             <div className="space-y-4">
               <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.25em] flex items-center gap-2">
-                Technical Analysis Breakdown
+                Performance Breakdown
                 <Info size={12} className="opacity-40" />
               </h4>
               <IndicatorGrid 
                 indicators={intelligence?.breakdown} 
                 type={selectedMover.type} 
                 sport={selectedMover.sport} 
+                entityType={selectedMover.entity_type}
               />
             </div>
 

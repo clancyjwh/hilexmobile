@@ -14,6 +14,7 @@ export interface Mover {
   entity_type?: 'athlete' | 'team';
   headshot_url?: string;
   logo_url?: string;
+  prefetchedBreakdown?: any;
 }
 
 const cryptoSymbols = ['BTC', 'ETH', 'XRP', 'SOL', 'ADA'];
@@ -68,22 +69,37 @@ export const fetchMovers = async (): Promise<Mover[]> => {
     process(commodities.data, 'commodity');
 
     if (entityResult.data) {
-      const filtered = entityResult.data.filter(e => {
+      const getTop3Bottom2 = (list: any[]) => {
+        if (list.length <= 5) return [...list].sort((a, b) => b.score - a.score);
+        const sorted = [...list].sort((a, b) => b.score - a.score);
+        return [...sorted.slice(0, 3), ...sorted.slice(-2)];
+      };
+
+      const rawEntities = entityResult.data.filter(e => {
         const n = (e.name || '').trim().toUpperCase();
-        return n && !n.startsWith('UFC_') && n !== 'GHOST' && n.length < 50;
+        const id = (e.id || '').trim().toUpperCase();
+        const matchesLongId = n === id && id.length > 10;
+        return n && !n.startsWith('UFC_') && n !== 'GHOST' && n.length < 50 && !matchesLongId;
       });
 
-      const topEntities = filtered.sort((a, b) => b.score - a.score).slice(0, 10);
+      const athletes = getTop3Bottom2(rawEntities.filter(e => e.type === 'athlete'));
+      const teams = getTop3Bottom2(rawEntities.filter(e => e.type === 'team'));
+      const topEntities = [...athletes, ...teams];
       
       topEntities.forEach(item => {
-        let displayName = item.name?.toUpperCase().split(' ').pop() || item.name;
-        if (item.name?.toUpperCase().includes('PARIS SAINT-GERMAIN')) displayName = 'PSG';
-        if (item.name?.toUpperCase().includes('REAL MADRID')) displayName = 'REAL';
-        if (item.name?.toUpperCase().includes('BAYERN')) displayName = 'BAYERN';
+        let displayName = item.name || '';
+        const nameU = displayName.toUpperCase();
+        if (nameU.includes('PARIS SAINT-GERMAIN')) displayName = 'PSG';
+        else if (nameU.includes('REAL MADRID')) displayName = 'REAL';
+        else if (nameU.includes('BAYERN')) displayName = 'BAYERN';
+        else if (item.type === 'athlete' && displayName.includes(' ')) {
+          const parts = displayName.trim().split(/\s+/);
+          displayName = parts.length >= 2 ? `${parts[0][0]}. ${parts.slice(1).join(' ')}` : displayName;
+        }
 
         movers.push({
           id: item.id,
-          name: displayName,
+          name: displayName.toUpperCase(),
           symbol: item.id,
           org: item.org,
           sport: item.sport,
@@ -96,7 +112,17 @@ export const fetchMovers = async (): Promise<Mover[]> => {
       });
     }
 
-    return movers.sort((a, b) => Math.abs(b.score) - Math.abs(a.score)).slice(0, 30);
+    const sortedMovers = movers.sort((a, b) => Math.abs(b.score) - Math.abs(a.score)).slice(0, 30);
+
+    // Pre-fetch sports indicators to make modal instant
+    await Promise.all(sortedMovers.filter(m => m.type === 'sport').map(async m => {
+      try {
+        const intel = await fetchAssetIntelligence(m);
+        if (intel) m.prefetchedBreakdown = intel.breakdown;
+      } catch {}
+    }));
+
+    return sortedMovers;
   } catch (err) {
     console.error('Error fetching movers:', err);
     return [];
@@ -105,6 +131,8 @@ export const fetchMovers = async (): Promise<Mover[]> => {
 
 export const fetchAssetIntelligence = async (mover: Mover): Promise<any> => {
   try {
+    if (mover.prefetchedBreakdown) return { breakdown: mover.prefetchedBreakdown };
+
     if (mover.type === 'sport') {
       const sport = mover.sport?.toLowerCase();
       if (mover.entity_type === 'team') {
@@ -123,7 +151,15 @@ export const fetchAssetIntelligence = async (mover: Mover): Promise<any> => {
         const res = await fetch(`https://hilex-nhl-production.up.railway.app/athletes/heatscore/${encodeURIComponent(mover.id)}`);
         if (res.ok) {
           const data = await res.json();
-          return { breakdown: data.breakdown };
+          const breakdown = data.breakdown || {};
+          // Specific mapping for NHL Athletes if needed
+          if (sport === 'nhl' && data.playoffs) {
+             breakdown.gwg = data.playoffs.gwg;
+             breakdown.playoff_ppg = data.playoffs.ppg;
+             breakdown.last3_pts = data.playoffs.last3_points;
+             breakdown.regular_ppg = data.regular_season?.ppg;
+          }
+          return { breakdown };
         }
       }
       return { breakdown: null };
