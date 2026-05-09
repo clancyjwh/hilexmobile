@@ -92,7 +92,7 @@ export default function IndicatorGrid({ indicators, type, sport, entityType }: I
   });
 
   return (
-    <div className={`grid ${displayIndicators.length > 6 ? 'grid-cols-2' : (displayIndicators.length <= 4 ? 'grid-cols-1' : 'grid-cols-2')} gap-2.5`}>
+    <div className={`grid ${displayIndicators.length > 6 ? 'grid-cols-2' : (displayIndicators.length <= 4 ? 'grid-cols-1' : 'grid-cols-2')} gap-2.5 overflow-x-hidden`}>
       {displayIndicators.map((ind, i) => {
         const colorClass = getIndicatorColor(ind.score);
         const isGold = ind.score >= 9;
@@ -100,10 +100,12 @@ export default function IndicatorGrid({ indicators, type, sport, entityType }: I
         return (
           <div 
             key={i}
-            className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-500 shadow-lg ${colorClass}`}
+            className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-500 shadow-lg ${colorClass} min-w-0`}
           >
-            <span className={`text-[9px] font-black uppercase tracking-widest ${isGold ? 'text-black/50' : 'opacity-60'}`}>{ind.name}</span>
-            <span className="text-sm font-black italic">
+            <span className={`text-[9px] font-black uppercase tracking-widest truncate mr-2 ${isGold ? 'text-black/50' : 'opacity-60'}`}>
+              {ind.name}
+            </span>
+            <span className="text-sm font-black italic shrink-0">
               {ind.score > 0 ? '+' : ''}{ind.score.toFixed(1)}
             </span>
           </div>

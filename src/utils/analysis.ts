@@ -131,15 +131,15 @@ export const fetchAssetIntelligence = async (mover: Mover): Promise<any> => {
 
     if (mover.type === 'sport') {
       const sport = mover.sport?.toLowerCase();
-      // CLEAN ID: "nhl_COL" -> "COL"
       const cleanId = mover.id.split('_').pop() || mover.id;
 
       if (mover.entity_type === 'team') {
-        const endpoint = sport === 'soccer' ? 'ucl' : (sport === 'football' ? 'ucl' : sport);
+        const endpoint = (sport === 'soccer' || sport === 'football') ? 'ucl' : sport;
+        // MUST SEND BOTH HOME AND AWAY FOR ANALYSIS TO WORK
         const res = await fetch(`https://hilex-nhl-production.up.railway.app/${endpoint}/analyze`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(sport === 'nhl' ? { home_team: cleanId } : { home_team: cleanId, away_team: 'AUTO' })
+          body: JSON.stringify({ home_team: cleanId, away_team: 'AUTO' })
         });
         if (res.ok) {
           const data = await res.json();
@@ -151,8 +151,6 @@ export const fetchAssetIntelligence = async (mover: Mover): Promise<any> => {
         if (res.ok) {
           const data = await res.json();
           const breakdown: any = data.breakdown || {};
-          
-          // FORCED MAPPING FOR ATHLETES
           if (sport === 'nhl') {
             if (data.playoffs) {
                breakdown.gwg = data.playoffs.gwg || 0;

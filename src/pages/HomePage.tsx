@@ -59,16 +59,16 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] text-white flex flex-col font-sans selection:bg-[#00D8FF]/30 overflow-x-hidden">
+    <div className="min-h-screen bg-[#020617] text-white flex flex-col font-sans selection:bg-[#00D8FF]/30 overflow-x-hidden w-full">
       {/* Header */}
-      <header className="px-6 py-4 flex items-center justify-between sticky top-0 bg-[#020617]/90 backdrop-blur-xl z-40 border-b border-white/5">
-        <div className="flex items-center gap-3">
+      <header className="px-6 py-4 flex items-center justify-between sticky top-0 bg-[#020617]/90 backdrop-blur-xl z-40 border-b border-white/5 w-full overflow-hidden">
+        <div className="flex items-center gap-3 shrink-0">
           <div className="w-9 h-9 bg-white/5 rounded-xl border border-white/10 flex items-center justify-center p-1.5">
             <img src="/logo.png" alt="HiLEX" className="w-full h-full object-contain" />
           </div>
           <span className="font-black text-2xl tracking-tighter uppercase italic text-white">HiLEX</span>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 shrink-0">
           <button className="p-2.5 bg-white/5 rounded-full text-slate-400 active:text-[#00D8FF]">
             <Search size={20} />
           </button>
@@ -79,13 +79,13 @@ export default function HomePage() {
       </header>
 
       {/* Hero */}
-      <div className="px-6 py-8 bg-gradient-to-b from-[#00D8FF]/10 to-transparent">
+      <div className="px-6 py-8 bg-gradient-to-b from-[#00D8FF]/10 to-transparent w-full overflow-hidden">
         <h1 className="text-4xl font-black italic uppercase tracking-tighter mb-1 text-white">Market Pulse</h1>
         <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] opacity-50">Global Intelligence Feed</p>
       </div>
 
       {/* Main Grid */}
-      <main className="px-6 flex-grow pb-32">
+      <main className="px-6 flex-grow pb-32 w-full overflow-hidden">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.25em] flex items-center gap-2">
             <Activity size={12} className="text-[#00D8FF]" />
@@ -114,7 +114,7 @@ export default function HomePage() {
       </main>
 
       {/* Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 h-24 bg-[#020617]/95 backdrop-blur-2xl border-t border-white/10 px-12 flex items-center justify-between z-40">
+      <nav className="fixed bottom-0 left-0 right-0 h-24 bg-[#020617]/95 backdrop-blur-2xl border-t border-white/10 px-12 flex items-center justify-between z-40 w-full">
         <button className="text-[#00D8FF] flex flex-col items-center gap-1.5">
           <TrendingUp size={26} />
           <span className="text-[9px] font-black uppercase tracking-widest">MOVERS</span>
@@ -136,15 +136,15 @@ export default function HomePage() {
         title="Asset Intelligence"
       >
         {selectedMover && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-8">
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-8 overflow-x-hidden max-w-full">
             {/* Header section */}
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-4 flex-1">
+            <div className="flex items-center justify-between gap-4 w-full">
+              <div className="flex items-center gap-4 flex-1 min-w-0">
                 {(selectedMover.headshot_url || selectedMover.logo_url) && (
                   <img src={selectedMover.headshot_url || selectedMover.logo_url} className="w-16 h-16 rounded-full border-2 border-white/10 bg-black/40 shadow-2xl shrink-0 object-contain" alt="" />
                 )}
-                <div>
-                  <h3 className={`${getNameFontSize(selectedMover.name)} font-black italic uppercase tracking-tighter text-white leading-tight`}>
+                <div className="min-w-0 overflow-hidden">
+                  <h3 className={`${getNameFontSize(selectedMover.name)} font-black italic uppercase tracking-tighter text-white leading-tight break-words`}>
                     {selectedMover.name}
                   </h3>
                   <div className="mt-1">
@@ -164,7 +164,7 @@ export default function HomePage() {
 
             {/* Accuracy Section - ONLY for Finance */}
             {selectedMover.type !== 'sport' && (
-              <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 flex justify-between items-center shadow-2xl relative overflow-hidden">
+              <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 flex justify-between items-center shadow-2xl relative overflow-hidden w-full">
                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#00D8FF]/20 to-transparent" />
                 <div>
                   <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">
@@ -178,7 +178,7 @@ export default function HomePage() {
             )}
 
             {/* Analysis Breakdown */}
-            <div className="space-y-4">
+            <div className="space-y-4 w-full">
               <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.25em] flex items-center gap-2">
                 Performance Breakdown
                 <Info size={12} className="opacity-40" />
@@ -197,7 +197,7 @@ export default function HomePage() {
             )}
 
             {/* Compliance Footer */}
-            <div className="pt-6 border-t border-white/5">
+            <div className="pt-6 border-t border-white/5 w-full">
               <p className="text-[9px] text-slate-700 text-center uppercase tracking-tight leading-relaxed font-bold italic">
                 Proprietary algorithmic data processing. Past performance is not indicative of future results. No part of this analysis constitutes financial advice. Institutional-grade research.
               </p>
