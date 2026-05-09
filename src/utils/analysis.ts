@@ -27,26 +27,23 @@ const canadianStocks = ['SHOP', 'CSU', 'LSPD', 'CLS', 'SPAI'];
 const flattenSportData = (data: any, sport?: string) => {
   if (!data) return {};
   const s = sport?.toLowerCase();
-  
-  // If the data is from the live Athlete API, it might be nested under 'regular_season' etc.
   const flat: any = { ...data };
 
   if (s === 'nhl') {
-    // Check both root level and nested levels (the Live API returns these nested)
-    const playoffs = data.playoffs || data.breakdown?.playoffs;
-    const regular = data.regular_season || data.breakdown?.regular_season;
+    // Check EVERY possible production key for MacKinnon's stats
+    const playoffs = data.playoffs || data.breakdown?.playoffs || data.playoff_stats;
+    const regular = data.regular_season || data.breakdown?.regular_season || data.regularSeason || data.season_stats;
     
     if (playoffs) {
-      flat.gwg = playoffs.gwg || 0;
-      flat.playoff_ppg = playoffs.ppg || 0;
-      flat.last3_points = playoffs.last3_points || 0;
+      flat.gwg = playoffs.gwg || playoffs.game_winning_goals || 0;
+      flat.playoff_ppg = playoffs.ppg || playoffs.points_per_game || 0;
+      flat.last3_points = playoffs.last3_points || playoffs.last_3_points || 0;
     }
     if (regular) {
-      flat.regular_ppg = regular.ppg || 0;
+      flat.regular_ppg = regular.ppg || regular.points_per_game || 0;
     }
   }
   
-  // Flatten breakdown if it exists as a property (common in Team stats)
   if (data.breakdown) {
     Object.assign(flat, flattenSportData(data.breakdown, sport));
   }
@@ -135,7 +132,6 @@ export const fetchMovers = async (): Promise<Mover[]> => {
           entity_type: item.type,
           headshot_url: item.headshot_url,
           logo_url: item.logo_url
-          // REMOVED prefetchedBreakdown: Force live fetch for absolute parity
         });
       });
     }
@@ -150,15 +146,11 @@ export const fetchMovers = async (): Promise<Mover[]> => {
 
 export const fetchAssetIntelligence = async (mover: Mover): Promise<any> => {
   try {
-    // ALWAYS fetch live data for sports entities to ensure 1:1 parity with detail pages
     if (mover.type === 'sport') {
       const sport = mover.sport?.toLowerCase();
       const cleanId = mover.id.split('_').pop() || mover.id;
-      const dateStr = new Date().toISOString().split('T')[0];
 
       if (mover.entity_type === 'team') {
-        // For teams without prefetched data, we use the Entity Score snapshot as it's the only single-team source
-        // BUT we check Supabase again to see if there's a fresher record than what's in the mover list
         const { data: latestTeam } = await supabase.from('entity_scores').select('breakdown, score').eq('id', mover.id).maybeSingle();
         if (latestTeam) {
           return { 
@@ -167,19 +159,17 @@ export const fetchAssetIntelligence = async (mover: Mover): Promise<any> => {
           };
         }
       } else {
-        // ATHLETE: Call the LIVE API (This is the source of truth for MacKinnon's +6.8 and +9.0)
         const res = await fetch(`https://hilex-nhl-production.up.railway.app/athletes/heatscore/${encodeURIComponent(mover.id)}`);
         if (res.ok) {
           const data = await res.json();
           return { 
             breakdown: flattenSportData(data, sport),
-            score: data.score // Use the LIVE score, not the cached mover score
+            score: data.score
           };
         }
       }
       return { breakdown: {} };
     } else {
-      // Finance logic remains the same
       const category = mover.type === 'stock' ? (canadianStocks.includes(mover.symbol) ? 'ca_stocks_top_picks' : 'stocks_top_picks') : 
                        mover.type === 'crypto' ? 'crypto_top_picks' : 
                        mover.type === 'forex' ? 'forex_top_picks' : 'commodities_top_picks';
