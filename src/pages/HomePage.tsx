@@ -11,7 +11,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [selectedMover, setSelectedMover] = useState<Mover | null>(null);
   const [accuracy, setAccuracy] = useState<number | null>(null);
-  const [intelligence, setIntelligence] = useState<{ breakdown: any; summary: string | null; json9?: any } | null>(null);
+  const [intelligence, setIntelligence] = useState<{ breakdown: any; json9?: any } | null>(null);
   const [intelLoading, setIntelLoading] = useState(false);
 
   useEffect(() => {
@@ -46,7 +46,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] text-white flex flex-col font-sans selection:bg-[#00D8FF]/30">
+    <div className="min-h-screen bg-[#020617] text-white flex flex-col font-sans selection:bg-[#00D8FF]/30 overflow-x-hidden">
       {/* Header */}
       <header className="px-6 py-4 flex items-center justify-between sticky top-0 bg-[#020617]/90 backdrop-blur-xl z-40 border-b border-white/5">
         <div className="flex items-center gap-3">
@@ -123,18 +123,18 @@ export default function HomePage() {
         title="Asset Intelligence"
       >
         {selectedMover && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Header section */}
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Header section - Forced to match screenshot exactly */}
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-4">
                 {(selectedMover.headshot_url || selectedMover.logo_url) && (
-                  <img src={selectedMover.headshot_url || selectedMover.logo_url} className="w-14 h-14 rounded-full border border-white/10 bg-black/20" alt="" />
+                  <img src={selectedMover.headshot_url || selectedMover.logo_url} className="w-16 h-16 rounded-full border border-white/10 bg-black/20 shadow-xl" alt="" />
                 )}
                 <div>
-                  <h3 className="text-3xl font-black italic uppercase tracking-tighter text-white leading-none">{selectedMover.name}</h3>
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-[8px] bg-[#00D8FF]/10 text-[#00D8FF] px-2 py-0.5 rounded border border-[#00D8FF]/20 uppercase font-black tracking-widest">
-                      {selectedMover.type}
+                  <h3 className="text-4xl font-black italic uppercase tracking-tighter text-white leading-none">{selectedMover.name}</h3>
+                  <div className="mt-2">
+                    <span className="text-[9px] bg-[#00D8FF]/10 text-[#00D8FF] px-2.5 py-1 rounded border border-[#00D8FF]/20 uppercase font-black tracking-[0.2em]">
+                      {selectedMover.type === 'sport' ? (selectedMover.entity_type === 'athlete' ? 'ATHLETE' : 'TEAM') : selectedMover.type}
                     </span>
                   </div>
                 </div>
@@ -147,13 +147,13 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Accuracy */}
-            <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 flex justify-between items-center shadow-xl">
+            {/* Accuracy Section - Cleaned up per request */}
+            <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 flex justify-between items-center shadow-2xl relative overflow-hidden">
+               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#00D8FF]/20 to-transparent" />
               <div>
-                <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Historical Accuracy</div>
-                <p className="text-[10px] text-slate-400 font-medium italic">Verified predictive success</p>
+                <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Historical Accuracy</div>
               </div>
-              <div className="text-3xl font-black text-[#00D8FF] italic drop-shadow-[0_0_15px_rgba(0,216,255,0.4)]">
+              <div className="text-4xl font-black text-[#00D8FF] italic drop-shadow-[0_0_15px_rgba(0,216,255,0.3)]">
                 {accuracy ? `${accuracy}%` : '--%'}
               </div>
             </div>
@@ -167,24 +167,15 @@ export default function HomePage() {
               <IndicatorGrid indicators={intelligence?.breakdown} type={selectedMover.type} />
             </div>
 
-            {/* Intelligence Signal */}
-            <div className="bg-slate-900/40 rounded-2xl p-6 border border-white/5 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-[#00D8FF]/5 blur-3xl rounded-full -mr-16 -mt-16 group-hover:bg-[#00D8FF]/10 transition-all duration-700" />
-              <h4 className="text-[10px] font-black text-[#00D8FF] uppercase tracking-[0.3em] mb-4 italic">Intelligence Signal</h4>
-              <p className="text-sm text-slate-300 leading-relaxed font-medium italic relative z-10">
-                {intelligence?.summary || 'Structural analysis complete. Signal maintaining high-fidelity alignment with current volatility horizons.'}
-              </p>
-            </div>
-
-            {/* Monthly Snapshots Grid - IDENTICAL to Desktop */}
+            {/* Monthly Snapshots - Re-designed compact version */}
             {intelligence?.json9 && (
               <MonthlySnapshots json9={intelligence.json9} />
             )}
 
             {/* Compliance Footer */}
-            <div className="bg-black/30 rounded-2xl p-5 border border-white/5">
-              <p className="text-[9px] text-slate-600 text-center uppercase tracking-tight leading-relaxed font-bold italic">
-                HiLEX signals are derived from proprietary algorithmic data processing. Past performance is not indicative of future results. No part of this analysis constitutes financial advice. HiLEX is a data intelligence platform for institutional-grade research.
+            <div className="pt-6 border-t border-white/5">
+              <p className="text-[9px] text-slate-700 text-center uppercase tracking-tight leading-relaxed font-bold italic">
+                Proprietary algorithmic data processing. Past performance is not indicative of future results. No part of this analysis constitutes financial advice. Institutional-grade research.
               </p>
             </div>
           </div>

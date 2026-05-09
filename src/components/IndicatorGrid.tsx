@@ -13,61 +13,30 @@ const getIndicatorColor = (score: number) => {
 };
 
 export default function IndicatorGrid({ indicators, type }: IndicatorGridProps) {
-  if (!indicators) {
-    return (
-      <div className="grid grid-cols-2 gap-2">
-        {[1, 2, 3, 4].map(i => (
-          <div key={i} className="h-12 bg-white/5 rounded-xl animate-pulse" />
-        ))}
-      </div>
-    );
-  }
+  const financeMapping: Record<string, string> = {
+    'SMA': 'SMA',
+    'RSI': 'RSI',
+    'Bollinger': 'BOLL',
+    'CCI': 'CCI',
+    'MACD': 'MACD',
+    'ROC': 'ROC'
+  };
 
-  let displayIndicators: { name: string; score: number }[] = [];
+  const sportsMapping: Record<string, string> = {
+    'win_pct': 'WIN %',
+    'last_10': 'L10',
+    'home_away': 'H/A',
+    'streak': 'STRK',
+    'fg_pct': 'FG %',
+    'three_pt_pct': '3PT %'
+  };
 
-  if (type === 'sport') {
-    // Parity with desktop sports indicator labels
-    const sportsMapping: Record<string, string> = {
-      'win_pct': 'WIN %',
-      'last_10': 'L10',
-      'fg_pct': 'FG %',
-      'three_pt_pct': '3PT %',
-      'streak': 'STRK',
-      'home_away': 'H/A',
-      'rebounding': 'REB',
-      'striking_accuracy': 'STRK',
-      'finish_rate': 'FINISH',
-      'rebound_rate': 'REB'
-    };
-
-    displayIndicators = Object.keys(sportsMapping)
-      .filter(key => indicators[key] !== undefined)
-      .map(key => ({
-        name: sportsMapping[key],
-        score: typeof indicators[key] === 'number' ? indicators[key] : (parseFloat(indicators[key]?.signal || '0'))
-      }))
-      .slice(0, 6);
-  } else {
-    // Parity with desktop financial indicator labels
-    const financeMapping: Record<string, string> = {
-      'SMA': 'SMA',
-      'RSI': 'RSI',
-      'Bollinger': 'BOLL',
-      'CCI': 'CCI',
-      'MACD': 'MACD',
-      'ROC': 'ROC'
-    };
-
-    displayIndicators = Object.keys(financeMapping)
-      .filter(key => indicators[key] !== undefined)
-      .map(key => ({
-        name: financeMapping[key],
-        score: typeof indicators[key]?.signal === 'number' ? indicators[key].signal : parseFloat(indicators[key]?.signal || '0')
-      }))
-      .slice(0, 6);
-  }
-
-  if (displayIndicators.length === 0) return null;
+  const mapping = type === 'sport' ? sportsMapping : financeMapping;
+  const displayIndicators = Object.keys(mapping).map(key => {
+    const val = indicators?.[key];
+    const score = typeof val === 'number' ? val : (parseFloat(val?.signal || '0'));
+    return { name: mapping[key], score };
+  });
 
   return (
     <div className="grid grid-cols-2 gap-2">
