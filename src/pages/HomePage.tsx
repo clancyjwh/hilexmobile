@@ -26,11 +26,13 @@ export default function HomePage() {
   };
 
   const handleMoverClick = async (mover: Mover) => {
+    console.log('[DIAGNOSTIC] Mover Selected:', mover);
     setSelectedMover(mover);
     setAccuracy(null);
     setIntelligence(null);
     
     if (mover.prefetchedBreakdown) {
+      console.log('[DIAGNOSTIC] Using prefetched breakdown');
       setIntelligence({ breakdown: mover.prefetchedBreakdown });
       setIntelLoading(false);
     } else {
@@ -44,8 +46,9 @@ export default function HomePage() {
       ]);
       setAccuracy(acc);
       setIntelligence(intel);
+      console.log('[DIAGNOSTIC] Intelligence State Updated:', intel);
     } catch (err) {
-      console.error('Error loading intelligence:', err);
+      console.error('[DIAGNOSTIC] Error loading intelligence:', err);
     } finally {
       setIntelLoading(false);
     }
@@ -137,27 +140,33 @@ export default function HomePage() {
       >
         {selectedMover && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-8 overflow-x-hidden w-full">
-            {/* NEW Header section - Stacked vertically on the right */}
-            <div className="flex items-start gap-6 w-full">
-              {(selectedMover.headshot_url || selectedMover.logo_url) && (
-                <img src={selectedMover.headshot_url || selectedMover.logo_url} className="w-24 h-24 rounded-2xl border-2 border-white/10 bg-black/40 shadow-2xl shrink-0 object-contain" alt="" />
-              )}
-              <div className="flex-1 min-w-0">
-                <h3 className={`${getNameFontSize(selectedMover.name)} font-black italic uppercase tracking-tighter text-white leading-none whitespace-nowrap mb-2`}>
+            {/* STABLE Header section using Grid */}
+            <div className="grid grid-cols-[auto_1fr] gap-6 items-start w-full">
+              <div className="shrink-0">
+                {(selectedMover.headshot_url || selectedMover.logo_url) ? (
+                  <img src={selectedMover.headshot_url || selectedMover.logo_url} className="w-24 h-24 rounded-2xl border-2 border-white/10 bg-black/40 shadow-2xl object-contain" alt="" />
+                ) : (
+                  <div className="w-24 h-24 rounded-2xl border-2 border-white/10 bg-slate-800 flex items-center justify-center">
+                    <TrendingUp className="text-slate-600" />
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0 flex flex-col gap-2">
+                <h3 className={`${getNameFontSize(selectedMover.name)} font-black italic uppercase tracking-tighter text-white leading-none whitespace-nowrap overflow-hidden text-ellipsis`}>
                   {selectedMover.name}
                 </h3>
                 
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-[9px] bg-[#00D8FF]/10 text-[#00D8FF] px-2.5 py-1 rounded border border-[#00D8FF]/20 uppercase font-black tracking-[0.2em]">
+                <div>
+                  <span className="text-[9px] bg-[#00D8FF]/10 text-[#00D8FF] px-2.5 py-1 rounded border border-[#00D8FF]/20 uppercase font-black tracking-[0.2em] inline-block">
                     {selectedMover.type === 'sport' ? (selectedMover.entity_type === 'athlete' ? 'ATHLETE' : 'TEAM') : selectedMover.type}
                   </span>
                 </div>
 
-                <div className="flex items-baseline gap-2">
-                  <span className={`text-5xl font-black italic tracking-tighter leading-none ${selectedMover.score > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                <div className="flex items-baseline gap-2 mt-auto">
+                  <span className={`text-4xl font-black italic tracking-tighter leading-none ${selectedMover.score > 0 ? 'text-green-400' : 'text-red-400'}`}>
                     {selectedMover.score > 0 ? '+' : ''}{selectedMover.score.toFixed(1)}
                   </span>
-                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">HeatScore</span>
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest shrink-0">HeatScore</span>
                 </div>
               </div>
             </div>

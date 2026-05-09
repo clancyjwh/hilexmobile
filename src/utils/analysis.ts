@@ -132,24 +132,39 @@ export const fetchAssetIntelligence = async (mover: Mover): Promise<any> => {
     if (mover.type === 'sport') {
       const sport = mover.sport?.toLowerCase();
       const cleanId = mover.id.split('_').pop() || mover.id;
+      const dateStr = new Date().toISOString().split('T')[0];
+
+      console.log(`[DIAGNOSTIC] Fetching ${sport} ${mover.entity_type}: ${cleanId} (Date: ${dateStr})`);
 
       if (mover.entity_type === 'team') {
-        const endpoint = (sport === 'soccer' || sport === 'football') ? 'ucl' : sport;
-        // MUST SEND BOTH HOME AND AWAY FOR ANALYSIS TO WORK
-        const res = await fetch(`https://hilex-nhl-production.up.railway.app/${endpoint}/analyze`, {
+        const endpoint = (sport === 'soccer' || sport === 'football') ? 'ucl' : (sport === 'football' ? 'ucl' : sport);
+        const url = `https://hilex-nhl-production.up.railway.app/${endpoint}/analyze`;
+        const body = { home_team: cleanId, away_team: 'AUTO', date: dateStr };
+        
+        console.log(`[DIAGNOSTIC] POST ${url}`, body);
+        
+        const res = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ home_team: cleanId, away_team: 'AUTO' })
+          body: JSON.stringify(body)
         });
+        
         if (res.ok) {
           const data = await res.json();
+          console.log(`[DIAGNOSTIC] Response for ${cleanId}:`, data);
           const teamData = data.home_team || data.away_team;
           return { breakdown: teamData?.breakdown || {} };
+        } else {
+          console.error(`[DIAGNOSTIC] API ERROR ${res.status} for ${cleanId}`);
         }
       } else {
-        const res = await fetch(`https://hilex-nhl-production.up.railway.app/athletes/heatscore/${encodeURIComponent(mover.id)}`);
+        const url = `https://hilex-nhl-production.up.railway.app/athletes/heatscore/${encodeURIComponent(mover.id)}`;
+        console.log(`[DIAGNOSTIC] GET ${url}`);
+        
+        const res = await fetch(url);
         if (res.ok) {
           const data = await res.json();
+          console.log(`[DIAGNOSTIC] Athlete Response for ${mover.id}:`, data);
           const breakdown: any = data.breakdown || {};
           if (sport === 'nhl') {
             if (data.playoffs) {
@@ -162,6 +177,8 @@ export const fetchAssetIntelligence = async (mover: Mover): Promise<any> => {
             }
           }
           return { breakdown };
+        } else {
+          console.error(`[DIAGNOSTIC] API ERROR ${res.status} for athlete ${mover.id}`);
         }
       }
       return { breakdown: {} };
@@ -203,7 +220,10 @@ export const fetchAssetIntelligence = async (mover: Mover): Promise<any> => {
       }
       return { breakdown: indicators, json9 };
     }
-  } catch { return { breakdown: {} }; }
+  } catch (err) { 
+    console.error(`[DIAGNOSTIC] CRITICAL ERROR:`, err);
+    return { breakdown: {} }; 
+  }
 };
 
 export const fetchAssetAccuracy = async (mover: Mover): Promise<number | null> => {
