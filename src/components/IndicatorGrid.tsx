@@ -44,7 +44,7 @@ export default function IndicatorGrid({ indicators, type, sport, entityType }: I
   const nhlAthleteMapping: Record<string, string> = {
     'gwg': 'GWG',
     'playoff_ppg': 'PLAYOFF PPG',
-    'last3_pts': 'LAST 3 P',
+    'last3_points': 'LAST 3 P', // CORRECTED KEY
     'regular_ppg': 'REGULAR PPG'
   };
 

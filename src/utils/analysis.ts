@@ -34,7 +34,7 @@ const flattenSportData = (data: any, sport?: string) => {
     if (data.playoffs) {
       flat.gwg = data.playoffs.gwg || 0;
       flat.playoff_ppg = data.playoffs.ppg || 0;
-      flat.last3_pts = data.playoffs.last3_points || 0;
+      flat.last3_points = data.playoffs.last3_points || 0; // CORRECTED KEY
     }
     if (data.regular_season) {
       flat.regular_ppg = data.regular_season.ppg || 0;
