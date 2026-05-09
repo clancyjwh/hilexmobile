@@ -33,12 +33,12 @@ export default function BottomDrawer({ isOpen, onClose, children, title }: Botto
 
       {/* Drawer */}
       <div 
-        className={`relative w-full max-h-[90vh] bg-[#020617] border-t border-white/10 rounded-t-[32px] p-6 shadow-2xl transition-transform duration-300 transform ${isOpen ? 'translate-y-0' : 'translate-y-full'}`}
+        className={`relative w-full max-h-[90vh] bg-[#020617] border-t border-white/10 rounded-t-[32px] p-6 shadow-2xl transition-transform duration-300 transform flex flex-col ${isOpen ? 'translate-y-0' : 'translate-y-full'}`}
       >
         {/* Handle */}
-        <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6" onClick={onClose} />
+        <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 shrink-0" onClick={onClose} />
 
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 shrink-0">
           <h2 className="text-xl font-bold text-white">{title}</h2>
           <button 
             onClick={onClose}
@@ -48,7 +48,7 @@ export default function BottomDrawer({ isOpen, onClose, children, title }: Botto
           </button>
         </div>
 
-        <div className="overflow-y-auto pb-8">
+        <div className="overflow-y-auto flex-1 pb-8 pr-1 -mr-1">
           {children}
         </div>
       </div>
