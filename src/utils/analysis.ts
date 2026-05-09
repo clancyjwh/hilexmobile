@@ -103,15 +103,17 @@ export const fetchMovers = async (): Promise<Mover[]> => {
           type: 'sport',
           entity_type: item.type,
           headshot_url: item.headshot_url,
-          logo_url: item.logo_url
+          logo_url: item.logo_url,
+          // CRITICAL FIX: PRE-LOAD THE BREAKDOWN FROM THE DATABASE
+          prefetchedBreakdown: item.breakdown || null
         });
       });
     }
 
     const sortedMovers = movers.sort((a, b) => Math.abs(b.score) - Math.abs(a.score)).slice(0, 30);
 
-    // Pre-fetch sports indicators
-    await Promise.all(sortedMovers.filter(m => m.type === 'sport').map(async m => {
+    // ONLY fetch if missing prefetched data
+    await Promise.all(sortedMovers.filter(m => m.type === 'sport' && !m.prefetchedBreakdown).map(async m => {
       try {
         const intel = await fetchAssetIntelligence(m);
         if (intel) m.prefetchedBreakdown = intel.breakdown;
@@ -138,7 +140,6 @@ export const fetchAssetIntelligence = async (mover: Mover): Promise<any> => {
         const endpoint = (sport === 'soccer' || sport === 'football' || sport === 'ucl') ? 'ucl' : sport;
         const url = `https://hilex-nhl-production.up.railway.app/${endpoint}/analyze`;
         
-        // SPECIAL CASE FOR SOCCER (UCL)
         const body = (endpoint === 'ucl') 
           ? { home_team_id: cleanId, away_team_id: 'AUTO', date: dateStr }
           : { home_team: cleanId, away_team: 'AUTO', date: dateStr };
@@ -158,7 +159,6 @@ export const fetchAssetIntelligence = async (mover: Mover): Promise<any> => {
         const res = await fetch(`https://hilex-nhl-production.up.railway.app/athletes/heatscore/${encodeURIComponent(mover.id)}`);
         if (res.ok) {
           const data = await res.json();
-          // ATHLETE FALLBACK: Check breakdown OR root object for indicators
           const breakdown: any = data.breakdown || data || {};
           
           if (sport === 'nhl') {
