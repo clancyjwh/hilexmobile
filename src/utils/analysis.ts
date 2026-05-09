@@ -23,6 +23,32 @@ const forexSymbols = ['EUR/USD', 'USD/CAD', 'USD/JPY', 'AUD/USD', 'GBP/USD'];
 const commoditySymbols = ['XAU/USD', 'WTI/USD', 'NG/USD', 'XAG/USD', 'HG1'];
 const canadianStocks = ['SHOP', 'CSU', 'LSPD', 'CLS', 'SPAI'];
 
+// CLEANING FUNCTION: Flattens nested sports data into the format expected by the UI
+const flattenSportData = (data: any, sport?: string) => {
+  if (!data) return {};
+  const s = sport?.toLowerCase();
+  const flat: any = { ...data };
+
+  // NHL Athlete Flattening
+  if (s === 'nhl') {
+    if (data.playoffs) {
+      flat.gwg = data.playoffs.gwg || 0;
+      flat.playoff_ppg = data.playoffs.ppg || 0;
+      flat.last3_pts = data.playoffs.last3_points || 0;
+    }
+    if (data.regular_season) {
+      flat.regular_ppg = data.regular_season.ppg || 0;
+    }
+  }
+  
+  // Flatten breakdown if it exists as a property
+  if (data.breakdown) {
+    Object.assign(flat, flattenSportData(data.breakdown, sport));
+  }
+
+  return flat;
+};
+
 const calculateAverageSignal = (asset: any): number => {
   if (asset.signal !== undefined && asset.signal !== null) {
     return typeof asset.signal === 'string' ? parseFloat(asset.signal) : asset.signal;
@@ -104,22 +130,13 @@ export const fetchMovers = async (): Promise<Mover[]> => {
           entity_type: item.type,
           headshot_url: item.headshot_url,
           logo_url: item.logo_url,
-          // CRITICAL FIX: PRE-LOAD THE BREAKDOWN FROM THE DATABASE
-          prefetchedBreakdown: item.breakdown || null
+          // APPLY FLATTENING TO PRE-FETCHED DATA
+          prefetchedBreakdown: flattenSportData(item.breakdown, item.sport)
         });
       });
     }
 
     const sortedMovers = movers.sort((a, b) => Math.abs(b.score) - Math.abs(a.score)).slice(0, 30);
-
-    // ONLY fetch if missing prefetched data
-    await Promise.all(sortedMovers.filter(m => m.type === 'sport' && !m.prefetchedBreakdown).map(async m => {
-      try {
-        const intel = await fetchAssetIntelligence(m);
-        if (intel) m.prefetchedBreakdown = intel.breakdown;
-      } catch {}
-    }));
-
     return sortedMovers;
   } catch (err) {
     console.error('Error fetching movers:', err);
@@ -139,7 +156,6 @@ export const fetchAssetIntelligence = async (mover: Mover): Promise<any> => {
       if (mover.entity_type === 'team') {
         const endpoint = (sport === 'soccer' || sport === 'football' || sport === 'ucl') ? 'ucl' : sport;
         const url = `https://hilex-nhl-production.up.railway.app/${endpoint}/analyze`;
-        
         const body = (endpoint === 'ucl') 
           ? { home_team_id: cleanId, away_team_id: 'AUTO', date: dateStr }
           : { home_team: cleanId, away_team: 'AUTO', date: dateStr };
@@ -153,25 +169,13 @@ export const fetchAssetIntelligence = async (mover: Mover): Promise<any> => {
         if (res.ok) {
           const data = await res.json();
           const teamData = data.home_team || data.away_team;
-          return { breakdown: teamData?.breakdown || {} };
+          return { breakdown: flattenSportData(teamData?.breakdown, sport) };
         }
       } else {
         const res = await fetch(`https://hilex-nhl-production.up.railway.app/athletes/heatscore/${encodeURIComponent(mover.id)}`);
         if (res.ok) {
           const data = await res.json();
-          const breakdown: any = data.breakdown || data || {};
-          
-          if (sport === 'nhl') {
-            if (data.playoffs) {
-               breakdown.gwg = data.playoffs.gwg || 0;
-               breakdown.playoff_ppg = data.playoffs.ppg || 0;
-               breakdown.last3_pts = data.playoffs.last3_points || 0;
-            }
-            if (data.regular_season) {
-               breakdown.regular_ppg = data.regular_season.ppg || 0;
-            }
-          }
-          return { breakdown };
+          return { breakdown: flattenSportData(data, sport) };
         }
       }
       return { breakdown: {} };
